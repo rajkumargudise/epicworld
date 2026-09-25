@@ -6,6 +6,7 @@ use App\Enums\StoryStatus;
 use App\Models\SourceFeed;
 use App\Models\Story;
 use Carbon\Carbon;
+use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
@@ -39,19 +40,40 @@ class RssFeedIngestor
             $stories = collect();
 
             foreach ($items as $item) {
-                $story = Story::updateOrCreate(
-                    ['content_hash' => $item['content_hash']],
-                    [
+                $observedAt = now();
+                $story = Story::firstOrNew(['content_hash' => $item['content_hash']]);
+
+                if (! $story->exists) {
+                    $story->fill([
                         'title' => $item['title'],
                         'slug' => $item['slug'],
                         'summary' => $item['summary'],
                         'canonical_url' => $item['source_url'],
                         'status' => StoryStatus::Discovered,
                         'occurred_at' => $item['published_at'],
-                        'first_seen_at' => $item['published_at'] ?? now(),
-                        'last_seen_at' => now(),
-                    ]
-                );
+                        'first_seen_at' => $item['published_at'] ?? $observedAt,
+                    ]);
+                } else {
+                    $story->fill([
+                        'title' => $item['title'],
+                        'last_seen_at' => $observedAt,
+                    ]);
+
+                    if ($item['summary'] !== null) {
+                        $story->summary = $item['summary'];
+                    }
+
+                    if ($item['source_url'] !== null) {
+                        $story->canonical_url = $item['source_url'];
+                    }
+
+                    if ($item['published_at'] !== null) {
+                        $story->occurred_at = $item['published_at'];
+                    }
+                }
+
+                $story->last_seen_at = $observedAt;
+                $story->save();
 
                 $sourceFeed->source->stories()->syncWithoutDetaching([
                     $story->id => [
@@ -121,7 +143,7 @@ class RssFeedIngestor
                 );
             }
 
-            return $items;
+            return array_values(array_filter($items));
         }
 
         $defaultNamespace = $xml->getDocNamespaces()[''] ?? null;
@@ -160,7 +182,7 @@ class RssFeedIngestor
             );
         }
 
-        return $items;
+        return array_values(array_filter($items));
     }
 
     /**
@@ -172,7 +194,7 @@ class RssFeedIngestor
      *     external_id: ?string,
      *     published_at: ?Carbon,
      *     content_hash: string
-     * }
+     * }|null
      */
     private function normalizeItem(
         string $title,
@@ -180,18 +202,26 @@ class RssFeedIngestor
         ?string $sourceUrl,
         ?string $externalId,
         string $publishedAt
-    ): array {
+    ): ?array {
         $title = trim($title);
         $summary = trim($summary) ?: null;
         $sourceUrl = trim((string) $sourceUrl) ?: null;
         $externalId = trim((string) $externalId) ?: null;
 
         if ($title === '') {
-            throw new InvalidArgumentException('Feed item is missing a title.');
+            return null;
         }
 
         $publishedAt = trim($publishedAt);
-        $published = $publishedAt !== '' ? Carbon::parse($publishedAt) : null;
+        $published = null;
+
+        if ($publishedAt !== '') {
+            try {
+                $published = Carbon::parse($publishedAt);
+            } catch (InvalidFormatException) {
+                $published = null;
+            }
+        }
         $identity = $externalId ?? $sourceUrl ?? $title;
         $contentHash = hash('sha256', $identity);
 

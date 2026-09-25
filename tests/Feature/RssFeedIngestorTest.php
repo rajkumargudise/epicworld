@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\StoryStatus;
 use App\Models\Source;
 use App\Models\SourceFeed;
 use App\Models\Story;
@@ -130,6 +131,112 @@ class RssFeedIngestorTest extends TestCase
         ]);
     }
 
+    public function test_existing_story_status_is_preserved_on_reingestion(): void
+    {
+        $feed = $this->makeFeed();
+        Http::fake([$feed->url => Http::response($this->rss(), 200)]);
+        $ingestor = app(RssFeedIngestor::class);
+
+        $ingestor->ingest($feed);
+        $story = Story::firstOrFail();
+        $story->update(['status' => StoryStatus::Candidate]);
+        $ingestor->ingest($feed);
+
+        $this->assertSame(StoryStatus::Candidate, $story->refresh()->status);
+    }
+
+    public function test_existing_story_first_seen_at_is_preserved_while_last_seen_at_changes(): void
+    {
+        $feed = $this->makeFeed();
+        Http::fake([$feed->url => Http::response($this->rss(), 200)]);
+        $ingestor = app(RssFeedIngestor::class);
+
+        $this->travelTo('2026-09-25 12:00:00');
+        $ingestor->ingest($feed);
+        $story = Story::firstOrFail();
+        $firstSeenAt = $story->first_seen_at;
+
+        $this->travelTo('2026-09-25 13:00:00');
+        $ingestor->ingest($feed);
+        $story->refresh();
+
+        $this->assertTrue($story->first_seen_at->equalTo($firstSeenAt));
+        $this->assertSame('2026-09-25 13:00:00', $story->last_seen_at->format('Y-m-d H:i:s'));
+    }
+
+    public function test_invalid_publication_date_does_not_abort_the_feed(): void
+    {
+        $feed = $this->makeFeed();
+        Http::fake([$feed->url => Http::response($this->rssItems(<<<'XML'
+        <item>
+            <title>Invalid date story</title>
+            <link>https://example.com/invalid-date</link>
+            <guid>invalid-date</guid>
+            <pubDate>not-a-date</pubDate>
+        </item>
+        XML), 200)]);
+
+        $stories = app(RssFeedIngestor::class)->ingest($feed);
+
+        $this->assertCount(1, $stories);
+        $this->assertNull(Story::firstOrFail()->occurred_at);
+        $this->assertNotNull($feed->refresh()->last_success_at);
+    }
+
+    public function test_invalid_item_does_not_prevent_valid_items_from_being_imported(): void
+    {
+        $feed = $this->makeFeed();
+        Http::fake([$feed->url => Http::response($this->rssItems(<<<'XML'
+        <item>
+            <title>Valid first story</title>
+            <guid>valid-first</guid>
+        </item>
+        <item>
+            <description>Missing title</description>
+            <guid>invalid-item</guid>
+        </item>
+        <item>
+            <title>Valid second story</title>
+            <guid>valid-second</guid>
+        </item>
+        XML), 200)]);
+
+        $stories = app(RssFeedIngestor::class)->ingest($feed);
+
+        $this->assertCount(2, $stories);
+        $this->assertSame(2, Story::count());
+        $this->assertNotNull($feed->refresh()->last_success_at);
+    }
+
+    public function test_reingestion_does_not_erase_stronger_existing_story_data(): void
+    {
+        $feed = $this->makeFeed();
+        Http::fakeSequence()
+            ->push($this->rss(), 200)
+            ->push($this->rssItems(<<<'XML'
+        <item>
+            <title>First story</title>
+            <guid>story-1</guid>
+        </item>
+        XML), 200);
+        $ingestor = app(RssFeedIngestor::class);
+
+        $ingestor->ingest($feed);
+        $story = Story::firstOrFail();
+        $story->update([
+            'summary' => 'Editorially enriched summary.',
+            'canonical_url' => 'https://canonical.example.com/first',
+            'occurred_at' => '2026-09-24 12:00:00',
+        ]);
+
+        $ingestor->ingest($feed);
+        $story->refresh();
+
+        $this->assertSame('Editorially enriched summary.', $story->summary);
+        $this->assertSame('https://canonical.example.com/first', $story->canonical_url);
+        $this->assertSame('2026-09-24 12:00:00', $story->occurred_at->format('Y-m-d H:i:s'));
+    }
+
     private function makeFeed(): SourceFeed
     {
         $source = Source::create([
@@ -146,11 +253,7 @@ class RssFeedIngestorTest extends TestCase
 
     private function rss(): string
     {
-        return <<<'XML'
-<?xml version="1.0"?>
-<rss version="2.0">
-    <channel>
-        <title>Example Feed</title>
+        return $this->rssItems(<<<'XML'
         <item>
             <title>First story</title>
             <description>A short summary.</description>
@@ -158,6 +261,17 @@ class RssFeedIngestorTest extends TestCase
             <guid>story-1</guid>
             <pubDate>Fri, 25 Sep 2026 12:00:00 +0000</pubDate>
         </item>
+        XML);
+    }
+
+    private function rssItems(string $items): string
+    {
+        return <<<XML
+<?xml version="1.0"?>
+<rss version="2.0">
+    <channel>
+        <title>Example Feed</title>
+{$items}
     </channel>
 </rss>
 XML;
