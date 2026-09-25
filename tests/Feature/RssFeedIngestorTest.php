@@ -237,11 +237,123 @@ class RssFeedIngestorTest extends TestCase
         $this->assertSame('2026-09-24 12:00:00', $story->occurred_at->format('Y-m-d H:i:s'));
     }
 
-    private function makeFeed(): SourceFeed
+    public function test_matching_canonical_url_reuses_existing_story(): void
+    {
+        $feed = $this->makeFeed();
+        $story = Story::create([
+            'title' => 'Editorial title',
+            'slug' => 'editorial-title',
+            'summary' => 'Editorial summary.',
+            'canonical_url' => 'https://example.com/stories/first',
+            'status' => StoryStatus::Candidate,
+        ]);
+        Http::fake([$feed->url => Http::response($this->rss(), 200)]);
+
+        $stories = app(RssFeedIngestor::class)->ingest($feed);
+
+        $this->assertCount(1, $stories);
+        $this->assertSame($story->id, $stories->first()->id);
+        $this->assertSame(1, Story::count());
+    }
+
+    public function test_matching_canonical_url_does_not_reset_status_or_editorial_data(): void
+    {
+        $feed = $this->makeFeed();
+        $story = Story::create([
+            'title' => 'Editorial title',
+            'slug' => 'editorial-title',
+            'summary' => 'Editorial summary.',
+            'canonical_url' => 'https://example.com/stories/first',
+            'status' => StoryStatus::Published,
+        ]);
+        Http::fake([$feed->url => Http::response($this->rssWithItem(
+            title: 'Feed title',
+            summary: 'Feed summary.',
+            link: 'https://example.com/stories/first',
+            guid: 'different-guid',
+        ), 200)]);
+
+        app(RssFeedIngestor::class)->ingest($feed);
+        $story->refresh();
+
+        $this->assertSame(StoryStatus::Published, $story->status);
+        $this->assertSame('Editorial title', $story->title);
+        $this->assertSame('Editorial summary.', $story->summary);
+    }
+
+    public function test_matching_source_external_id_reuses_existing_story(): void
+    {
+        $feed = $this->makeFeed();
+        $story = Story::create([
+            'title' => 'Existing story',
+            'slug' => 'existing-story',
+            'status' => StoryStatus::Review,
+        ]);
+        $feed->source->stories()->attach($story, ['external_id' => 'source-123']);
+        Http::fake([$feed->url => Http::response($this->rssWithItem(
+            title: 'Feed title',
+            summary: 'Feed summary.',
+            link: null,
+            guid: 'source-123',
+        ), 200)]);
+
+        $stories = app(RssFeedIngestor::class)->ingest($feed);
+
+        $this->assertSame($story->id, $stories->first()->id);
+        $this->assertSame(1, Story::count());
+        $this->assertSame(StoryStatus::Review, $story->refresh()->status);
+    }
+
+    public function test_matching_story_preserves_first_seen_and_updates_last_seen(): void
+    {
+        $feed = $this->makeFeed();
+        $story = Story::create([
+            'title' => 'Existing story',
+            'slug' => 'existing-story',
+            'canonical_url' => 'https://example.com/stories/first',
+            'first_seen_at' => '2026-09-24 12:00:00',
+            'last_seen_at' => '2026-09-24 12:00:00',
+        ]);
+        Http::fake([$feed->url => Http::response($this->rss(), 200)]);
+
+        $this->travelTo('2026-09-25 13:00:00');
+        app(RssFeedIngestor::class)->ingest($feed);
+        $story->refresh();
+
+        $this->assertSame('2026-09-24 12:00:00', $story->first_seen_at->format('Y-m-d H:i:s'));
+        $this->assertSame('2026-09-25 13:00:00', $story->last_seen_at->format('Y-m-d H:i:s'));
+    }
+
+    public function test_same_external_id_from_a_different_source_does_not_use_a_source_scoped_hash_fallback(): void
+    {
+        $firstFeed = $this->makeFeed('first-source');
+        $secondFeed = $this->makeFeed('second-source');
+        $response = $this->rssWithItem(
+            title: 'Shared external identity',
+            summary: 'Source-specific observation.',
+            link: null,
+            guid: 'shared-id',
+        );
+        Http::fakeSequence()
+            ->push($response, 200)
+            ->push($response, 200);
+        $ingestor = app(RssFeedIngestor::class);
+
+        $ingestor->ingest($firstFeed);
+        $stories = $ingestor->ingest($secondFeed);
+
+        $this->assertCount(0, $stories);
+        $this->assertSame(1, Story::count());
+        $this->assertSame(1, $firstFeed->source->stories()->count());
+        $this->assertSame(0, $secondFeed->source->stories()->count());
+        $this->assertSame('Shared external identity', Story::firstOrFail()->title);
+    }
+
+    private function makeFeed(string $sourceSlug = 'example-source'): SourceFeed
     {
         $source = Source::create([
-            'name' => 'Example Source',
-            'slug' => 'example-source',
+            'name' => $sourceSlug,
+            'slug' => $sourceSlug,
         ]);
 
         return SourceFeed::create([
@@ -253,13 +365,34 @@ class RssFeedIngestorTest extends TestCase
 
     private function rss(): string
     {
-        return $this->rssItems(<<<'XML'
+        return $this->rssWithItem(
+            title: 'First story',
+            summary: 'A short summary.',
+            link: 'https://example.com/stories/first',
+            guid: 'story-1',
+            publishedAt: 'Fri, 25 Sep 2026 12:00:00 +0000',
+        );
+    }
+
+    private function rssWithItem(
+        string $title,
+        ?string $summary,
+        ?string $link,
+        ?string $guid,
+        ?string $publishedAt = null,
+    ): string {
+        $summaryXml = $summary !== null ? '<description>'.$summary.'</description>' : '';
+        $linkXml = $link !== null ? '<link>'.$link.'</link>' : '';
+        $guidXml = $guid !== null ? '<guid>'.$guid.'</guid>' : '';
+        $publishedXml = $publishedAt !== null ? '<pubDate>'.$publishedAt.'</pubDate>' : '';
+
+        return $this->rssItems(<<<XML
         <item>
-            <title>First story</title>
-            <description>A short summary.</description>
-            <link>https://example.com/stories/first</link>
-            <guid>story-1</guid>
-            <pubDate>Fri, 25 Sep 2026 12:00:00 +0000</pubDate>
+            <title>{$title}</title>
+            {$summaryXml}
+            {$linkXml}
+            {$guidXml}
+            {$publishedXml}
         </item>
         XML);
     }

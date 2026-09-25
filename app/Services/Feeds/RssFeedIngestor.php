@@ -5,9 +5,11 @@ namespace App\Services\Feeds;
 use App\Enums\StoryStatus;
 use App\Models\SourceFeed;
 use App\Models\Story;
+use App\Services\Stories\StoryMatcher;
 use Carbon\Carbon;
 use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -17,6 +19,11 @@ use SimpleXMLElement;
 
 class RssFeedIngestor
 {
+    public function __construct(
+        private readonly StoryMatcher $storyMatcher,
+    ) {
+    }
+
     public function ingest(SourceFeed $sourceFeed): Collection
     {
         try {
@@ -41,10 +48,16 @@ class RssFeedIngestor
 
             foreach ($items as $item) {
                 $observedAt = now();
-                $story = Story::firstOrNew(['content_hash' => $item['content_hash']]);
+                $match = $this->storyMatcher->match(
+                    $sourceFeed->source,
+                    $item['source_url'],
+                    $item['external_id'],
+                );
+                $story = $match->story;
 
-                if (! $story->exists) {
-                    $story->fill([
+                if ($story === null) {
+                    $story = new Story([
+                        'content_hash' => $item['content_hash'],
                         'title' => $item['title'],
                         'slug' => $item['slug'],
                         'summary' => $item['summary'],
@@ -53,27 +66,22 @@ class RssFeedIngestor
                         'occurred_at' => $item['published_at'],
                         'first_seen_at' => $item['published_at'] ?? $observedAt,
                     ]);
-                } else {
-                    $story->fill([
-                        'title' => $item['title'],
-                        'last_seen_at' => $observedAt,
-                    ]);
 
-                    if ($item['summary'] !== null) {
-                        $story->summary = $item['summary'];
-                    }
+                    $story->last_seen_at = $observedAt;
 
-                    if ($item['source_url'] !== null) {
-                        $story->canonical_url = $item['source_url'];
-                    }
+                    try {
+                        $story->save();
+                    } catch (QueryException $exception) {
+                        if (! str_contains($exception->getMessage(), 'content_hash')) {
+                            throw $exception;
+                        }
 
-                    if ($item['published_at'] !== null) {
-                        $story->occurred_at = $item['published_at'];
+                        continue;
                     }
+                } elseif ($match->matched) {
+                    $story->last_seen_at = $observedAt;
+                    $story->save();
                 }
-
-                $story->last_seen_at = $observedAt;
-                $story->save();
 
                 $sourceFeed->source->stories()->syncWithoutDetaching([
                     $story->id => [
