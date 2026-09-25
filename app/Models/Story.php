@@ -57,8 +57,7 @@ class Story extends Model
                 'published_at',
                 'discovered_at',
                 'metadata',
-            ])
-            ->withTimestamps();
+            ]);
     }
 
     public function article(): HasOne
