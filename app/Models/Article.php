@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ArticleStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -39,6 +40,7 @@ class Article extends Model
     protected function casts(): array
     {
         return [
+            'status' => ArticleStatus::class,
             'published_at' => 'datetime',
             'updated_content_at' => 'datetime',
             'is_featured' => 'boolean',

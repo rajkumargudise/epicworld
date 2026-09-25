@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\StoryStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,6 +32,7 @@ class Story extends Model
     protected function casts(): array
     {
         return [
+            'status' => StoryStatus::class,
             'occurred_at' => 'datetime',
             'first_seen_at' => 'datetime',
             'last_seen_at' => 'datetime',
