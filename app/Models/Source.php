@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -21,6 +22,7 @@ class Source extends Model
         'logo_url',
         'is_trusted',
         'is_active',
+        'default_topic_id',
         'metadata',
     ];
 
@@ -36,6 +38,11 @@ class Source extends Model
     public function feeds(): HasMany
     {
         return $this->hasMany(SourceFeed::class);
+    }
+
+    public function defaultTopic(): BelongsTo
+    {
+        return $this->belongsTo(Topic::class, 'default_topic_id');
     }
 
     public function stories(): BelongsToMany
