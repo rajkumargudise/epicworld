@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 
 class Story extends Model
 {
@@ -63,5 +64,24 @@ class Story extends Model
     public function article(): HasOne
     {
         return $this->hasOne(Article::class);
+    }
+
+    public function sourceCount(): int
+    {
+        return $this->sources()->count();
+    }
+
+    public function hasTrustedSource(): bool
+    {
+        return $this->sources()->where('is_trusted', true)->exists();
+    }
+
+    public function latestSourceObservationAt(): ?Carbon
+    {
+        $latest = $this->sources()
+            ->orderByPivot('discovered_at', 'desc')
+            ->first()?->pivot?->discovered_at;
+
+        return $latest !== null ? Carbon::parse($latest) : null;
     }
 }
