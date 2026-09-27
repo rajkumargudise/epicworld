@@ -17,12 +17,14 @@ class Topic extends Model
         'slug',
         'description',
         'is_active',
+        'is_sensitive',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'is_sensitive' => 'boolean',
         ];
     }
 

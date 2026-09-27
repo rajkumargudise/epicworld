@@ -17,6 +17,7 @@ class Category extends Model
         'icon',
         'color',
         'is_active',
+        'is_sensitive',
         'sort_order',
     ];
 
@@ -24,6 +25,7 @@ class Category extends Model
     {
         return [
             'is_active' => 'boolean',
+            'is_sensitive' => 'boolean',
         ];
     }
 

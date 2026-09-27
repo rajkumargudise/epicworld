@@ -19,11 +19,19 @@ use App\Models\Article;
  * reaches Review (the deterministic Milestone 5 pipeline and the
  * AI-assisted Milestone 8 one alike) keeps Story and Article in
  * sync the same way, rather than each caller reimplementing it.
+ *
+ * It also annotates the Article with its sensitivity routing
+ * decision (see SensitiveContentRouter) as soon as it reaches
+ * Review, so a reviewer sees why a story needs extra care from the
+ * moment they open it - reaching Review never implies a sensitive
+ * story is any closer to being approved; PublicationPolicy enforces
+ * that separately.
  */
 class PublicationDecision
 {
     public function __construct(
         private readonly ArticleQualityEvaluator $evaluator,
+        private readonly SensitiveContentRouter $sensitivityRouter,
     ) {}
 
     /**
@@ -37,6 +45,8 @@ class PublicationDecision
      */
     public function decide(Article $article): Article
     {
+        $this->sensitivityRouter->annotate($article);
+
         $result = $this->evaluator->evaluate($article);
 
         $metadata = $article->editorial_metadata ?? [];

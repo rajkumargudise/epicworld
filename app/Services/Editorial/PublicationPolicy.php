@@ -21,12 +21,33 @@ use App\Models\Article;
  * rather than silently coerced, so an editor (or a script driving
  * this service) always gets an honest true/false rather than a
  * status that quietly did something unexpected.
+ *
+ * Both methods also refuse a sensitive Article
+ * (SensitiveContentRouter::requiresReview()) that has not been
+ * explicitly human-reviewed - checked independently in each method,
+ * not only once at the top of the pipeline, so there is no single
+ * code path whose removal would silently let sensitive content
+ * through. Nothing here or in PublicationDecision ever clears that
+ * requirement on its own; only confirmSensitiveReview() does, and
+ * that is always a deliberate call, never automatic.
  */
 class PublicationPolicy
 {
     public function __construct(
         private readonly ArticleQualityEvaluator $evaluator,
+        private readonly SensitiveContentRouter $sensitivityRouter,
     ) {}
+
+    /**
+     * The explicit editor action that clears a sensitive Article to
+     * proceed through approve()/publish(). This is the only place
+     * that ever sets it - re-evaluation elsewhere always preserves
+     * whatever this last recorded.
+     */
+    public function confirmSensitiveReview(Article $article): void
+    {
+        $this->sensitivityRouter->confirmHumanReview($article);
+    }
 
     /**
      * Approve a Review article, moving it to Scheduled. Quality is
@@ -44,6 +65,10 @@ class PublicationPolicy
     public function approve(Article $article): bool
     {
         if ($article->status !== ArticleStatus::Review) {
+            return false;
+        }
+
+        if ($this->sensitivityRouter->requiresReview($article)) {
             return false;
         }
 
@@ -88,6 +113,16 @@ class PublicationPolicy
         }
 
         if ($article->status !== ArticleStatus::Scheduled) {
+            return false;
+        }
+
+        // Defense in depth: an Article should never reach Scheduled
+        // while still requiring sensitive review (approve() already
+        // checks this), but publish() checks independently rather
+        // than trusting that invariant holds - a direct status edit,
+        // a bug, or a future caller of publish() alone must not be
+        // able to bypass this by skipping approve().
+        if ($this->sensitivityRouter->requiresReview($article)) {
             return false;
         }
 
