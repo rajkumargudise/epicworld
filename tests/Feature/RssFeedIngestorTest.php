@@ -80,6 +80,63 @@ class RssFeedIngestorTest extends TestCase
         $this->assertSame('Feed request returned HTTP 503.', $feed->last_error);
     }
 
+    public function test_failure_after_success_preserves_the_last_success_timestamp(): void
+    {
+        $feed = $this->makeFeed();
+        Http::fake([
+            $feed->url => Http::sequence()
+                ->push($this->rss(), 200)
+                ->push('unavailable', 503),
+        ]);
+
+        app(RssFeedIngestor::class)->ingest($feed);
+        $lastSuccessAt = $feed->refresh()->last_success_at;
+        $this->assertNotNull($lastSuccessAt);
+
+        app(RssFeedIngestor::class)->ingest($feed);
+        $feed->refresh();
+
+        $this->assertNotNull($feed->last_failure_at);
+        $this->assertSame('Feed request returned HTTP 503.', $feed->last_error);
+        $this->assertSame($lastSuccessAt->toDateTimeString(), $feed->last_success_at->toDateTimeString());
+    }
+
+    public function test_success_after_failure_clears_the_failure_state(): void
+    {
+        $feed = $this->makeFeed();
+        Http::fake([
+            $feed->url => Http::sequence()
+                ->push('unavailable', 503)
+                ->push($this->rss(), 200),
+        ]);
+
+        app(RssFeedIngestor::class)->ingest($feed);
+        $this->assertNotNull($feed->refresh()->last_failure_at);
+
+        app(RssFeedIngestor::class)->ingest($feed);
+        $feed->refresh();
+
+        $this->assertNotNull($feed->last_success_at);
+        $this->assertNull($feed->last_failure_at);
+        $this->assertNull($feed->last_error);
+    }
+
+    public function test_inactive_feed_is_not_ingested(): void
+    {
+        $feed = $this->makeFeed();
+        $feed->update(['is_active' => false]);
+        Http::preventStrayRequests();
+
+        $stories = app(RssFeedIngestor::class)->ingest($feed);
+        $feed->refresh();
+
+        $this->assertCount(0, $stories);
+        $this->assertSame(0, Story::count());
+        $this->assertNull($feed->last_fetched_at);
+        $this->assertNull($feed->last_success_at);
+        $this->assertNull($feed->last_failure_at);
+    }
+
     public function test_malformed_feed_fails_safely_and_records_the_error(): void
     {
         $feed = $this->makeFeed();

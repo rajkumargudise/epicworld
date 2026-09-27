@@ -25,6 +25,14 @@ class RssFeedIngestor
 
     public function ingest(SourceFeed $sourceFeed): Collection
     {
+        // is_active defaults to true at the database level and is NOT NULL;
+        // a freshly created model that didn't set it explicitly can still
+        // read as null in memory until refreshed, so only an explicit
+        // false should skip ingestion.
+        if ($sourceFeed->is_active === false) {
+            return collect();
+        }
+
         try {
             $this->validateUrl($sourceFeed->url);
 
