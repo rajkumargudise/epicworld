@@ -3,6 +3,8 @@
 namespace App\Services\Editorial;
 
 use App\Models\Story;
+use App\Services\Evidence\Fact;
+use App\Services\Evidence\FactSheet;
 use Illuminate\Support\Carbon;
 
 /**
@@ -55,22 +57,23 @@ class FactExtractor
                 continue;
             }
 
-            $facts[(string) $source->id] = [
-                'source_id' => $source->id,
-                'source_name' => $source->name,
-                'reported' => $reported,
-            ];
+            $facts[(string) $source->id] = new Fact(
+                sourceId: $source->id,
+                sourceName: $source->name,
+                reported: $reported,
+            );
         }
 
         // array_values: facts is a list for storage, the keying above
         // is only to de-duplicate/replace by source_id while building.
-        $facts = array_values($facts);
+        $factSheet = new FactSheet(array_values($facts));
+        $rebuilt = $factSheet->toArray();
 
-        if ($facts === ($story->facts ?? [])) {
+        if ($rebuilt === ($story->facts ?? [])) {
             return false;
         }
 
-        $story->update(['facts' => $facts]);
+        $story->update(['facts' => $rebuilt]);
 
         return true;
     }

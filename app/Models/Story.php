@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\StoryStatus;
+use App\Services\Evidence\FactSheet;
 use App\Support\CanonicalUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -93,5 +94,16 @@ class Story extends Model
             ->first()?->pivot?->discovered_at;
 
         return $latest !== null ? Carbon::parse($latest) : null;
+    }
+
+    /**
+     * The typed view of this Story's evidence ledger (see FactSheet)
+     * for any consumer that needs to check claims against it or hand
+     * evidence to the AI provider boundary, rather than reading the
+     * raw facts array directly.
+     */
+    public function factSheet(): FactSheet
+    {
+        return FactSheet::fromArray($this->facts ?? []);
     }
 }
