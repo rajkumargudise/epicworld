@@ -42,4 +42,26 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    /**
+     * May view and edit editorial content and move it through review
+     * and approval, but not publish or clear sensitive review.
+     */
+    public function editor(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => User::ROLE_EDITOR,
+        ]);
+    }
+
+    /**
+     * May additionally publish content and clear sensitive-content
+     * review.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => User::ROLE_ADMIN,
+        ]);
+    }
 }
