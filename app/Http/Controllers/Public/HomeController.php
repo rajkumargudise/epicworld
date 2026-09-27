@@ -1,0 +1,85 @@
+<?php
+
+namespace App\Http\Controllers\Public;
+
+use App\Http\Controllers\Controller;
+use App\Models\Article;
+use App\Models\Category;
+use Illuminate\View\View;
+
+/**
+ * The public homepage, built entirely from real published content -
+ * no mock data. Every section here degrades gracefully when the
+ * underlying signal doesn't exist yet (no is_featured article, no
+ * is_breaking article, a category with nothing published) rather
+ * than fabricating placeholder rows.
+ */
+class HomeController extends Controller
+{
+    /**
+     * How many categories to surface as homepage sections, and how
+     * many articles inside each - both bounded so the homepage query
+     * cost never grows with the size of the archive.
+     */
+    private const CATEGORY_SECTIONS = 6;
+
+    private const ARTICLES_PER_SECTION = 4;
+
+    private const LATEST_COUNT = 8;
+
+    private const BREAKING_COUNT = 5;
+
+    public function index(): View
+    {
+        $featured = Article::publiclyVisible()
+            ->with(['category', 'author'])
+            ->where('is_featured', true)
+            ->orderByDesc('published_at')
+            ->first()
+            ?? Article::publiclyVisible()->with(['category', 'author'])->orderByDesc('published_at')->first();
+
+        $latest = Article::publiclyVisible()
+            ->with(['category', 'author'])
+            ->when($featured, fn ($query) => $query->whereKeyNot($featured->id))
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
+            ->take(self::LATEST_COUNT)
+            ->get();
+
+        // The one boolean the domain already has for "surface this
+        // more prominently" - a stand-in trending/breaking strip that
+        // simply doesn't render when no article has been flagged.
+        $breaking = Article::publiclyVisible()
+            ->with(['category'])
+            ->where('is_breaking', true)
+            ->orderByDesc('published_at')
+            ->take(self::BREAKING_COUNT)
+            ->get();
+
+        $categorySections = Category::active()
+            ->take(self::CATEGORY_SECTIONS)
+            ->get()
+            ->map(fn (Category $category) => [
+                'category' => $category,
+                'articles' => Article::publiclyVisible()
+                    ->with(['author'])
+                    ->where('category_id', $category->id)
+                    ->orderByDesc('published_at')
+                    ->take(self::ARTICLES_PER_SECTION)
+                    ->get(),
+            ])
+            ->filter(fn (array $section) => $section['articles']->isNotEmpty())
+            ->values();
+
+        return view('public.home', [
+            'featured' => $featured,
+            'latest' => $latest,
+            'breaking' => $breaking,
+            'categorySections' => $categorySections,
+            'seoTitle' => config('app.name', 'EPIC World'),
+            'seoDescription' => 'The latest news, analysis, and explainers across technology, business, science, and the world.',
+            'canonicalUrl' => route('home'),
+            'indexable' => true,
+        ]);
+    }
+}

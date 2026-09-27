@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Category;
 use App\Services\Ai\Providers\FakeAiProvider;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +25,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // The public layout's taxonomy nav is shared here rather than
+        // fetched in every public controller - one query per request,
+        // computed once, the same active-category list every public
+        // page's <nav> needs.
+        View::composer('layouts.public', function ($view): void {
+            $view->with('navCategories', Category::active()->get());
+        });
     }
 }
