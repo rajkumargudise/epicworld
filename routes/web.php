@@ -8,6 +8,7 @@ use App\Http\Controllers\Public\ArticleController as PublicArticleController;
 use App\Http\Controllers\Public\CategoryController;
 use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Public\LatestController;
+use App\Http\Controllers\Public\SearchController;
 use App\Http\Controllers\Public\TagController;
 use App\Models\Article;
 use App\Models\Category;
@@ -40,6 +41,7 @@ Route::bind('category', function (string $slug) {
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/latest', [LatestController::class, 'index'])->name('latest');
+Route::get('/search', [SearchController::class, 'index'])->name('search');
 Route::get('/category/{category:slug}', [CategoryController::class, 'show'])->name('category.show');
 Route::get('/article/{publicArticle:slug}', [PublicArticleController::class, 'show'])->name('article.show');
 Route::get('/tag/{tag:slug}', [TagController::class, 'show'])->name('tag.show');

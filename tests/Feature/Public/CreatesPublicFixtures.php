@@ -3,9 +3,12 @@
 namespace Tests\Feature\Public;
 
 use App\Enums\ArticleStatus;
+use App\Enums\StoryStatus;
 use App\Models\Article;
 use App\Models\Category;
+use App\Models\Story;
 use App\Models\Tag;
+use App\Models\Topic;
 
 /**
  * Direct Model::create() fixtures, matching the rest of this codebase's
@@ -52,5 +55,34 @@ trait CreatesPublicFixtures
             'name' => 'Cloud',
             'slug' => 'cloud-'.uniqid(),
         ], $overrides));
+    }
+
+    private function topic(array $overrides = []): Topic
+    {
+        return Topic::create(array_merge([
+            'category_id' => $this->category()->id,
+            'name' => 'General',
+            'slug' => 'general-'.uniqid(),
+            'is_active' => true,
+        ], $overrides));
+    }
+
+    /**
+     * A published article whose Story carries the given Topic - the
+     * only way an Article is associated with a Topic at all, since
+     * Article itself has no topic_id.
+     */
+    private function publishedArticleWithTopic(Topic $topic, array $overrides = []): Article
+    {
+        $story = Story::create([
+            'topic_id' => $topic->id,
+            'title' => 'Story for '.($overrides['title'] ?? 'a published article'),
+            'slug' => 'story-'.uniqid(),
+            'content_hash' => hash('sha256', uniqid()),
+            'status' => StoryStatus::Published,
+            'facts' => [],
+        ]);
+
+        return $this->publishedArticle(array_merge(['story_id' => $story->id], $overrides));
     }
 }

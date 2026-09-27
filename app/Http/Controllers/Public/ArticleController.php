@@ -31,6 +31,7 @@ class ArticleController extends Controller
 
         return view('public.article', [
             'article' => $article,
+            'relatedArticles' => $article->relatedArticles(),
             'seoTitle' => $article->seo_title ?: $article->title,
             'seoDescription' => $article->seo_description ?: $article->displayExcerpt(),
             'canonicalUrl' => $canonicalUrl,

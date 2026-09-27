@@ -21,6 +21,13 @@
                     <a href="{{ route('category.show', $navCategory) }}" class="hover:text-indigo-600">{{ $navCategory->name }}</a>
                 @endforeach
             </nav>
+
+            <form method="GET" action="{{ route('search') }}" class="hidden lg:block" role="search">
+                <label for="nav-search-q" class="sr-only">Search articles</label>
+                <input id="nav-search-q" type="search" name="q" value="{{ request()->query('q') }}"
+                       placeholder="Search&hellip;"
+                       class="w-48 rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:w-64 focus:outline-none">
+            </form>
         </div>
 
         <div class="border-t border-slate-100 lg:hidden">
@@ -30,6 +37,7 @@
                     @continue($navCategory->slug === 'latest')
                     <a href="{{ route('category.show', $navCategory) }}" class="hover:text-indigo-600">{{ $navCategory->name }}</a>
                 @endforeach
+                <a href="{{ route('search') }}" class="font-semibold text-indigo-600">Search</a>
             </nav>
         </div>
     </header>
@@ -44,6 +52,19 @@
 
     <footer class="border-t border-slate-200 bg-slate-50">
         <div class="mx-auto max-w-6xl px-4 py-8 text-sm text-slate-500 sm:px-6">
+            @if (($popularTags ?? collect())->isNotEmpty())
+                <div class="mb-6">
+                    <h2 class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Popular tags</h2>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach ($popularTags as $popularTag)
+                            <a href="{{ route('tag.show', $popularTag) }}"
+                               class="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200 hover:text-indigo-600">
+                                #{{ $popularTag->name }}
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
             <p>&copy; {{ now()->year }} EPIC World. All rights reserved.</p>
         </div>
     </footer>

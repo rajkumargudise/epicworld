@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ArticleStatus;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -119,5 +120,82 @@ class Article extends Model
     public function displayExcerpt(): ?string
     {
         return $this->dek ?: $this->excerpt;
+    }
+
+    /**
+     * A small, deterministic related-content mechanism - no AI
+     * similarity, no embeddings, no popularity scoring that doesn't
+     * exist. Fills up to $limit slots in a fixed preference order,
+     * each tier a single bounded, publicly-visible, self-excluding
+     * query, never repeating an article already chosen by an earlier
+     * tier:
+     *
+     *   1. same category (this Article has no direct topic_id of its
+     *      own - only its Story does - so category is the practical
+     *      "same subject" signal at the Article level)
+     *   2. shares at least one tag
+     *   3. most recently published, as a deterministic fallback so a
+     *      thin category/tag graph still fills the section
+     *
+     * Bounded to at most three queries (one per tier, skipped once
+     * $limit slots are already filled) regardless of how large the
+     * archive is - this does not scale per row, so it isn't an N+1
+     * concern even though it isn't a single query.
+     */
+    public function relatedArticles(int $limit = 4): Collection
+    {
+        $related = new Collection;
+
+        if ($this->category_id !== null) {
+            $related = $related->merge(
+                static::publiclyVisible()
+                    ->with(['category', 'author'])
+                    ->where('category_id', $this->category_id)
+                    ->whereKeyNot($this->id)
+                    ->orderByDesc('published_at')
+                    ->orderByDesc('id')
+                    ->take($limit)
+                    ->get()
+            );
+        }
+
+        if ($related->count() < $limit) {
+            $tagIds = $this->relationLoaded('tags')
+                ? $this->tags->pluck('id')
+                : $this->tags()->pluck('tags.id');
+
+            if ($tagIds->isNotEmpty()) {
+                $remaining = $limit - $related->count();
+                $excludeIds = $related->pluck('id')->push($this->id);
+
+                $related = $related->merge(
+                    static::publiclyVisible()
+                        ->with(['category', 'author'])
+                        ->whereNotIn('id', $excludeIds)
+                        ->whereHas('tags', fn (Builder $query) => $query->whereIn('tags.id', $tagIds))
+                        ->orderByDesc('published_at')
+                        ->orderByDesc('id')
+                        ->take($remaining)
+                        ->get()
+                );
+            }
+        }
+
+        if ($related->count() < $limit) {
+            $remaining = $limit - $related->count();
+            $excludeIds = $related->pluck('id')->push($this->id);
+
+            $related = $related->merge(
+                static::publiclyVisible()
+                    ->with(['category', 'author'])
+                    ->whereNotIn('id', $excludeIds)
+                    ->orderByDesc('published_at')
+                    ->orderByDesc('id')
+                    ->take($remaining)
+                    ->get()
+            );
+        }
+
+        return $related->take($limit)->values();
     }
 }

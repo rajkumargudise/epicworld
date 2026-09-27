@@ -89,4 +89,23 @@ class CategoryAndTagTest extends TestCase
     {
         $this->get('/tag/does-not-exist')->assertNotFound();
     }
+
+    public function test_a_category_page_lists_its_active_topics_as_search_shortcuts(): void
+    {
+        $category = $this->category();
+        $topic = $this->topic(['category_id' => $category->id, 'name' => 'Semiconductors']);
+        $this->topic(['category_id' => $category->id, 'name' => 'Retired topic', 'is_active' => false]);
+
+        $response = $this->get(route('category.show', $category));
+
+        $response->assertOk();
+        $response->assertSee('Semiconductors');
+        $response->assertSee(route('search', ['q' => $topic->name]), false);
+        $response->assertDontSee('Retired topic');
+    }
+
+    public function test_the_nav_lets_visitors_reach_search(): void
+    {
+        $this->get(route('home'))->assertSee(route('search'), false);
+    }
 }

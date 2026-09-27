@@ -84,4 +84,15 @@
             </div>
         @endif
     </article>
+
+    @if ($relatedArticles->isNotEmpty())
+        <section class="mx-auto mt-12 max-w-3xl border-t border-slate-200 pt-8">
+            <h2 class="mb-4 text-lg font-semibold text-slate-900">Related articles</h2>
+            <div class="grid gap-6 sm:grid-cols-2">
+                @foreach ($relatedArticles as $relatedArticle)
+                    @include('partials.article-card', ['article' => $relatedArticle])
+                @endforeach
+            </div>
+        </section>
+    @endif
 @endsection
