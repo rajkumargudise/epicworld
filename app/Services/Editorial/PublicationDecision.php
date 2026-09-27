@@ -3,6 +3,7 @@
 namespace App\Services\Editorial;
 
 use App\Enums\ArticleStatus;
+use App\Enums\StoryStatus;
 use App\Models\Article;
 
 /**
@@ -10,8 +11,14 @@ use App\Models\Article;
  * move from Draft to Review. It never publishes anything itself -
  * "Review" means ready for a human editor to read, not ready to go
  * live. Actual publication stays a distinct, explicitly human action
- * (a later milestone's admin/CMS step), so an AI-assisted pipeline
- * can advance an Article only as far as a person's desk.
+ * (see PublicationPolicy), so an AI-assisted pipeline can advance an
+ * Article only as far as a person's desk.
+ *
+ * When it moves an Article to Review, it mirrors that onto the
+ * Story too - the single place this happens, so every path that
+ * reaches Review (the deterministic Milestone 5 pipeline and the
+ * AI-assisted Milestone 8 one alike) keeps Story and Article in
+ * sync the same way, rather than each caller reimplementing it.
  */
 class PublicationDecision
 {
@@ -41,11 +48,24 @@ class PublicationDecision
 
         $attributes = ['editorial_metadata' => $metadata];
 
-        if ($result['passed'] && $article->status === ArticleStatus::Draft) {
+        $movesToReview = $result['passed'] && $article->status === ArticleStatus::Draft;
+
+        if ($movesToReview) {
             $attributes['status'] = ArticleStatus::Review;
         }
 
         $article->update($attributes);
+
+        if ($movesToReview) {
+            $story = $article->story;
+
+            // Only advance a Story that is still mid-pipeline (never
+            // regress one an editor has already moved past Review,
+            // and never touch one this Article isn't even linked to).
+            if ($story !== null && in_array($story->status, [StoryStatus::Candidate, StoryStatus::Processing], true)) {
+                $story->update(['status' => StoryStatus::Review]);
+            }
+        }
 
         return $article;
     }

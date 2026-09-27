@@ -117,8 +117,14 @@ class AiArticleGenerator
         }
 
         $article = $this->saveArticle($story, $result->data);
+        // Moves the Article to Review if it passes quality gates, and
+        // - as of Milestone 9 - mirrors that onto the Story too. If
+        // it doesn't pass, both stay exactly where they are: the
+        // Story remains Processing, correctly recording "a draft
+        // exists but needs editorial rework", never Review (which
+        // would overstate readiness) and never Candidate (which
+        // would suggest starting over).
         $this->publicationDecision->decide($article);
-        $article->refresh();
 
         $job->update([
             'status' => EditorialJobStatus::Completed,
@@ -127,16 +133,6 @@ class AiArticleGenerator
             'model' => $result->model,
             'article_id' => $article->id,
             'output' => $result->data,
-        ]);
-
-        // Review means the Article passed quality gates and is ready
-        // for a human editor - the Story mirrors that. Otherwise the
-        // job did produce a draft, but it needs editorial rework
-        // before it is reviewable; Processing records exactly that,
-        // distinct from Candidate (which would suggest starting over)
-        // and from Review (which would overstate readiness).
-        $story->update([
-            'status' => $article->status === ArticleStatus::Review ? StoryStatus::Review : StoryStatus::Processing,
         ]);
 
         return $job->refresh();

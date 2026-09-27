@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\ArticleStatus;
+use App\Enums\StoryStatus;
 use App\Models\Article;
 use App\Models\Category;
 use App\Models\Story;
@@ -58,15 +59,54 @@ class PublicationDecisionTest extends TestCase
         $this->assertFalse($decided->editorial_metadata['quality']['passed']);
     }
 
-    private function draftArticle(array $overrides = []): Article
+    public function test_a_passing_draft_advances_its_candidate_story_to_review(): void
+    {
+        $article = $this->draftArticle(storyOverrides: ['status' => StoryStatus::Candidate]);
+
+        app(PublicationDecision::class)->decide($article);
+
+        $this->assertSame(StoryStatus::Review, $article->story->refresh()->status);
+    }
+
+    public function test_a_passing_draft_advances_its_processing_story_to_review(): void
+    {
+        $article = $this->draftArticle(storyOverrides: ['status' => StoryStatus::Processing]);
+
+        app(PublicationDecision::class)->decide($article);
+
+        $this->assertSame(StoryStatus::Review, $article->story->refresh()->status);
+    }
+
+    public function test_it_never_regresses_a_story_already_past_review(): void
+    {
+        // Draft article whose Story was already moved to Approved by
+        // an editor (a later, more-advanced state than this decision
+        // knows how to make) - the Story is left exactly as is.
+        $article = $this->draftArticle(storyOverrides: ['status' => StoryStatus::Approved]);
+
+        app(PublicationDecision::class)->decide($article);
+
+        $this->assertSame(StoryStatus::Approved, $article->story->refresh()->status);
+    }
+
+    public function test_a_failing_draft_does_not_touch_the_story_status(): void
+    {
+        $article = $this->draftArticle(['content' => ''], storyOverrides: ['status' => StoryStatus::Candidate]);
+
+        app(PublicationDecision::class)->decide($article);
+
+        $this->assertSame(StoryStatus::Candidate, $article->story->refresh()->status);
+    }
+
+    private function draftArticle(array $overrides = [], array $storyOverrides = []): Article
     {
         $category = Category::create(['name' => 'World', 'slug' => 'world-'.uniqid()]);
-        $story = Story::create([
+        $story = Story::create(array_merge([
             'title' => 'A well-sourced story',
             'slug' => 'a-well-sourced-story-'.uniqid(),
             'content_hash' => hash('sha256', 'a-well-sourced-story-'.uniqid()),
             'facts' => [['source_id' => 1, 'source_name' => 'Example', 'reported' => ['title' => 'Reported']]],
-        ]);
+        ], $storyOverrides));
 
         return Article::create(array_merge([
             'story_id' => $story->id,
