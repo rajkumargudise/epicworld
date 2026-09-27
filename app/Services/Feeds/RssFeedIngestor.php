@@ -8,8 +8,8 @@ use App\Models\Story;
 use App\Services\Stories\StoryMatcher;
 use Carbon\Carbon;
 use Carbon\Exceptions\InvalidFormatException;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -21,8 +21,7 @@ class RssFeedIngestor
 {
     public function __construct(
         private readonly StoryMatcher $storyMatcher,
-    ) {
-    }
+    ) {}
 
     public function ingest(SourceFeed $sourceFeed): Collection
     {
@@ -72,7 +71,10 @@ class RssFeedIngestor
                     try {
                         $story->save();
                     } catch (QueryException $exception) {
-                        if (! str_contains($exception->getMessage(), 'content_hash')) {
+                        $isDuplicateIdentity = str_contains($exception->getMessage(), 'content_hash')
+                            || str_contains($exception->getMessage(), 'canonical_url_hash');
+
+                        if (! $isDuplicateIdentity) {
                             throw $exception;
                         }
 

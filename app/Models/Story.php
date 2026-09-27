@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\StoryStatus;
+use App\Support\CanonicalUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -40,6 +41,15 @@ class Story extends Model
             'facts' => 'array',
             'metadata' => 'array',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $story): void {
+            if ($story->isDirty('canonical_url')) {
+                $story->canonical_url_hash = CanonicalUrl::hash($story->canonical_url);
+            }
+        });
     }
 
     public function topic(): BelongsTo

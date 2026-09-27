@@ -4,18 +4,18 @@ namespace App\Services\Stories;
 
 use App\Models\Source;
 use App\Models\Story;
+use App\Support\CanonicalUrl;
 
 class StoryMatcher
 {
     public function match(Source $source, ?string $canonicalUrl, ?string $externalId): StoryMatchResult
     {
-        $normalizedUrl = $this->normalizeUrl($canonicalUrl);
+        $hash = CanonicalUrl::hash($canonicalUrl);
 
-        if ($normalizedUrl !== null) {
+        if ($hash !== null) {
             $story = Story::query()
-                ->whereNotNull('canonical_url')
-                ->get()
-                ->first(fn (Story $story): bool => $this->normalizeUrl($story->canonical_url) === $normalizedUrl);
+                ->where('canonical_url_hash', $hash)
+                ->first();
 
             if ($story !== null) {
                 return StoryMatchResult::exact($story, 'canonical_url');
@@ -39,50 +39,6 @@ class StoryMatcher
 
     public function normalizeUrl(?string $url): ?string
     {
-        $url = trim((string) $url);
-
-        if ($url === '') {
-            return null;
-        }
-
-        $parts = parse_url($url);
-
-        if ($parts === false || ! isset($parts['scheme'], $parts['host'])) {
-            return $url;
-        }
-
-        $scheme = strtolower($parts['scheme']);
-        $host = strtolower($parts['host']);
-        $port = $parts['port'] ?? null;
-
-        if (($scheme === 'http' && $port === 80) || ($scheme === 'https' && $port === 443)) {
-            $port = null;
-        }
-
-        $normalized = $scheme.'://';
-
-        if (isset($parts['user'])) {
-            $normalized .= $parts['user'];
-
-            if (isset($parts['pass'])) {
-                $normalized .= ':'.$parts['pass'];
-            }
-
-            $normalized .= '@';
-        }
-
-        $normalized .= $host;
-
-        if ($port !== null) {
-            $normalized .= ':'.$port;
-        }
-
-        $normalized .= $parts['path'] ?? '/';
-
-        if (isset($parts['query'])) {
-            $normalized .= '?'.$parts['query'];
-        }
-
-        return $normalized;
+        return CanonicalUrl::normalize($url);
     }
 }
