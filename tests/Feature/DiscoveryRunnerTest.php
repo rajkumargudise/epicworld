@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Enums\AutomationRunStatus;
+use App\Enums\EditorialJobStatus;
 use App\Enums\StoryStatus;
+use App\Models\EditorialJob;
 use App\Models\Source;
 use App\Models\SourceFeed;
 use App\Models\Story;
@@ -29,6 +31,15 @@ class DiscoveryRunnerTest extends TestCase
         $this->assertSame(1, $run->metrics['stories_qualified']);
         $this->assertSame(StoryStatus::Candidate, Story::firstOrFail()->status);
         $this->assertNotNull($feed->refresh()->last_success_at);
+
+        // A pending editorial job is created for the freshly qualified
+        // candidate, but discovery never starts it or moves the Story
+        // past Candidate - that is a later pipeline's job.
+        $this->assertSame(1, $run->metrics['editorial_jobs_created']);
+        $this->assertSame(1, EditorialJob::count());
+        $job = EditorialJob::firstOrFail();
+        $this->assertSame(Story::firstOrFail()->id, $job->story_id);
+        $this->assertSame(EditorialJobStatus::Pending, $job->status);
     }
 
     public function test_discovery_skips_inactive_feeds_entirely(): void
@@ -42,6 +53,7 @@ class DiscoveryRunnerTest extends TestCase
         $this->assertSame(0, $run->items_processed);
         $this->assertSame(0, Story::count());
         $this->assertNull($feed->refresh()->last_fetched_at);
+        $this->assertSame(0, EditorialJob::count());
     }
 
     public function test_running_discovery_twice_does_not_duplicate_anything(): void
@@ -59,6 +71,10 @@ class DiscoveryRunnerTest extends TestCase
         // The story is already a candidate on the second pass, so nothing
         // qualifies again - qualification is not repeated.
         $this->assertSame(0, $secondRun->metrics['stories_qualified']);
+        // Nor is a second editorial job created for the same story/type -
+        // the first run's pending job still stands.
+        $this->assertSame(0, $secondRun->metrics['editorial_jobs_created']);
+        $this->assertSame(1, EditorialJob::count());
     }
 
     public function test_discovery_does_not_downgrade_a_story_past_candidate(): void
@@ -72,6 +88,24 @@ class DiscoveryRunnerTest extends TestCase
         app(DiscoveryRunner::class)->run();
 
         $this->assertSame(StoryStatus::Published, Story::firstOrFail()->status);
+    }
+
+    public function test_discovery_does_not_create_a_job_for_a_story_that_has_moved_past_candidate(): void
+    {
+        $feed = $this->activeFeed();
+        Http::fake([$feed->url => Http::response($this->rss(), 200)]);
+        app(DiscoveryRunner::class)->run();
+
+        // The pipeline has already picked up the job and moved the Story
+        // along; running discovery again must not create a second job for
+        // it just because the feed still reports the same item.
+        Story::firstOrFail()->update(['status' => StoryStatus::Published]);
+        EditorialJob::query()->update(['status' => EditorialJobStatus::Completed]);
+
+        $secondRun = app(DiscoveryRunner::class)->run();
+
+        $this->assertSame(0, $secondRun->metrics['editorial_jobs_created']);
+        $this->assertSame(1, EditorialJob::count());
     }
 
     private function activeFeed(): SourceFeed
