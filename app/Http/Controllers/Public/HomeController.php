@@ -80,6 +80,39 @@ class HomeController extends Controller
             'seoDescription' => 'The latest news, analysis, and explainers across technology, business, science, and the world.',
             'canonicalUrl' => route('home'),
             'indexable' => true,
+            'jsonLd' => $this->websiteJsonLd(),
         ]);
+    }
+
+    /**
+     * Site-level structured data, kept on the homepage only rather
+     * than repeated on every page. Uses nothing beyond what is
+     * actually configured (the app name) and the site's own real
+     * routes - never an invented logo, social profile, or contact
+     * detail. The SearchAction describes the real /search feature
+     * that already exists, not a promotional claim.
+     */
+    private function websiteJsonLd(): array
+    {
+        return [
+            '@context' => 'https://schema.org',
+            '@graph' => [
+                [
+                    '@type' => 'Organization',
+                    'name' => config('app.name', 'EPIC World'),
+                    'url' => route('home'),
+                ],
+                [
+                    '@type' => 'WebSite',
+                    'name' => config('app.name', 'EPIC World'),
+                    'url' => route('home'),
+                    'potentialAction' => [
+                        '@type' => 'SearchAction',
+                        'target' => route('search').'?q={search_term_string}',
+                        'query-input' => 'required name=search_term_string',
+                    ],
+                ],
+            ],
+        ];
     }
 }

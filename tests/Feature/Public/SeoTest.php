@@ -68,4 +68,110 @@ class SeoTest extends TestCase
         $this->get(route('category.show', $category))
             ->assertSee('rel="canonical" href="'.route('category.show', $category).'"', false);
     }
+
+    public function test_article_json_ld_includes_article_section_and_keywords_when_available(): void
+    {
+        $category = $this->category(['name' => 'Robotics']);
+        $article = $this->publishedArticle(['category_id' => $category->id, 'title' => 'A robotics story']);
+        $tag = $this->tag(['name' => 'Automation']);
+        $article->tags()->attach($tag->id);
+
+        $response = $this->get(route('article.show', $article));
+
+        $response->assertOk();
+        $response->assertSee('"articleSection":"Robotics"', false);
+        $response->assertSee('"keywords":"Automation"', false);
+    }
+
+    public function test_article_json_ld_omits_author_and_image_when_the_article_has_none(): void
+    {
+        $article = $this->publishedArticle(['title' => 'No byline or image on this one']);
+
+        $response = $this->get(route('article.show', $article));
+
+        $response->assertOk();
+        $response->assertDontSee('"author"', false);
+        $response->assertDontSee('"image"', false);
+    }
+
+    public function test_article_json_ld_is_safely_encoded_against_script_context_breakout(): void
+    {
+        $article = $this->publishedArticle([
+            'title' => 'Breaking out </script><script>alert(1)</script> of the tag',
+        ]);
+
+        $response = $this->get(route('article.show', $article));
+
+        $response->assertOk();
+        $response->assertDontSee('</script><script>alert(1)</script>', false);
+    }
+
+    public function test_the_homepage_carries_website_and_organization_structured_data(): void
+    {
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee('"@type":"Organization"', false);
+        $response->assertSee('"@type":"WebSite"', false);
+        $response->assertSee('SearchAction', false);
+    }
+
+    public function test_organization_and_website_schema_never_invent_logo_or_social_profiles(): void
+    {
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertDontSee('"logo"', false);
+        $response->assertDontSee('"sameAs"', false);
+    }
+
+    public function test_a_second_page_of_latest_is_noindex_follow_with_a_self_referencing_canonical(): void
+    {
+        for ($i = 0; $i < 25; $i++) {
+            $this->publishedArticle(['title' => "Latest page two {$i}", 'published_at' => now()->subMinutes($i)]);
+        }
+
+        $response = $this->get(route('latest', ['page' => 2]));
+
+        $response->assertOk();
+        $response->assertSee('name="robots" content="noindex, follow"', false);
+        $response->assertSee('rel="canonical" href="'.route('latest', ['page' => 2]).'"', false);
+    }
+
+    public function test_page_one_of_latest_stays_indexable_with_a_clean_canonical(): void
+    {
+        for ($i = 0; $i < 25; $i++) {
+            $this->publishedArticle(['title' => "Latest page one {$i}", 'published_at' => now()->subMinutes($i)]);
+        }
+
+        $response = $this->get(route('latest'));
+
+        $response->assertOk();
+        $response->assertSee('name="robots" content="index, follow"', false);
+        $response->assertSee('rel="canonical" href="'.route('latest').'"', false);
+    }
+
+    public function test_a_second_page_of_a_category_is_noindex_follow_with_a_self_referencing_canonical(): void
+    {
+        $category = $this->category();
+        for ($i = 0; $i < 25; $i++) {
+            $this->publishedArticle(['category_id' => $category->id, 'title' => "Cat page two {$i}", 'published_at' => now()->subMinutes($i)]);
+        }
+
+        $response = $this->get(route('category.show', [$category, 'page' => 2]));
+
+        $response->assertOk();
+        $response->assertSee('name="robots" content="noindex, follow"', false);
+        $response->assertSee('rel="canonical" href="'.route('category.show', [$category, 'page' => 2]).'"', false);
+    }
+
+    public function test_canonical_urls_use_the_configured_app_url_and_https_scheme(): void
+    {
+        config(['app.url' => 'https://epicworld.example']);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('rel="canonical" href="https://epicworld.example', false);
+    }
 }

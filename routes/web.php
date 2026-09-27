@@ -8,7 +8,9 @@ use App\Http\Controllers\Public\ArticleController as PublicArticleController;
 use App\Http\Controllers\Public\CategoryController;
 use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Public\LatestController;
+use App\Http\Controllers\Public\RobotsController;
 use App\Http\Controllers\Public\SearchController;
+use App\Http\Controllers\Public\SitemapController;
 use App\Http\Controllers\Public\TagController;
 use App\Models\Article;
 use App\Models\Category;
@@ -40,6 +42,8 @@ Route::bind('category', function (string $slug) {
 });
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/robots.txt', [RobotsController::class, 'index'])->name('robots');
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 Route::get('/latest', [LatestController::class, 'index'])->name('latest');
 Route::get('/search', [SearchController::class, 'index'])->name('search');
 Route::get('/category/{category:slug}', [CategoryController::class, 'show'])->name('category.show');

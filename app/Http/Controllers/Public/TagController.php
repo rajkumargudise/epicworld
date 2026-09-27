@@ -20,13 +20,21 @@ class TagController extends Controller
             ->paginate(self::PER_PAGE)
             ->withQueryString();
 
+        // Same deliberate pagination SEO policy as /latest - see
+        // LatestController and partials/seo.blade.php.
+        $isFirstPage = $articles->currentPage() <= 1;
+
         return view('public.tag', [
             'tag' => $tag,
             'articles' => $articles,
             'seoTitle' => '#'.$tag->name.' — '.config('app.name', 'EPIC World'),
             'seoDescription' => "Articles tagged {$tag->name}.",
-            'canonicalUrl' => route('tag.show', $tag),
-            'indexable' => true,
+            'canonicalUrl' => $isFirstPage
+                ? route('tag.show', $tag)
+                : route('tag.show', [$tag, 'page' => $articles->currentPage()]),
+            'indexable' => $isFirstPage,
+            'showCanonical' => true,
+            'robotsContent' => $isFirstPage ? 'index, follow' : 'noindex, follow',
         ]);
     }
 }

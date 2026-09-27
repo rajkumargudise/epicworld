@@ -27,12 +27,23 @@ class LatestController extends Controller
             ->paginate(self::PER_PAGE)
             ->withQueryString();
 
+        // Pagination SEO policy: page one is the real, indexable
+        // destination and canonicalizes to the clean /latest URL.
+        // Page two and beyond are deliberately noindex (they're
+        // near-duplicate listings, not distinct content worth
+        // ranking) but still "follow" so crawlers keep discovering
+        // articles through them, and each carries a self-referencing
+        // canonical rather than none at all - see partials/seo.blade.php.
+        $isFirstPage = $articles->currentPage() <= 1;
+
         return view('public.latest', [
             'articles' => $articles,
             'seoTitle' => 'Latest — '.config('app.name', 'EPIC World'),
             'seoDescription' => 'The latest published articles, in chronological order.',
-            'canonicalUrl' => route('latest'),
-            'indexable' => true,
+            'canonicalUrl' => $isFirstPage ? route('latest') : route('latest', ['page' => $articles->currentPage()]),
+            'indexable' => $isFirstPage,
+            'showCanonical' => true,
+            'robotsContent' => $isFirstPage ? 'index, follow' : 'noindex, follow',
         ]);
     }
 }

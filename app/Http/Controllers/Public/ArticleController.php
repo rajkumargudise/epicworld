@@ -88,6 +88,17 @@ class ArticleController extends Controller
             ];
         }
 
+        if ($article->category) {
+            $jsonLd['articleSection'] = $article->category->name;
+        }
+
+        // tags is already eager-loaded by show() above, so this reads
+        // the loaded relation rather than issuing an extra query.
+        $tagNames = $article->tags->pluck('name');
+        if ($tagNames->isNotEmpty()) {
+            $jsonLd['keywords'] = $tagNames->implode(', ');
+        }
+
         return $jsonLd;
     }
 }

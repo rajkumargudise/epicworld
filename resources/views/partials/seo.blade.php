@@ -1,19 +1,42 @@
 {{--
-    Shared SEO foundation for every public page. Expects: $seoTitle,
-    $seoDescription, $canonicalUrl, $indexable (bool), and optionally
-    $ogImage and $jsonLd (an array to be encoded as a NewsArticle/etc.
-    JSON-LD block). When $indexable is false, only the title/description
-    and an explicit noindex directive are emitted - no canonical link,
-    Open Graph tags, or structured data, since those are themselves
-    signals meant to help a page get indexed and shared.
+    Shared SEO foundation for every public page.
+
+    $seoTitle, $seoDescription - always required.
+    $canonicalUrl - the URL this page should canonicalize to.
+    $indexable (bool) - controls the default robots directive and
+        whether Open Graph / Twitter card / JSON-LD are emitted. Those
+        tags are themselves signals meant to help a page get indexed
+        and shared, so a genuinely non-indexable page (search,
+        allow_indexing = false, ...) gets none of them.
+    $showCanonical (bool, optional, default: $indexable) - whether to
+        emit the canonical link at all. This is independent of
+        $indexable so a paginated page beyond page one can still carry
+        a self-referencing canonical while being noindexed (see the
+        pagination policy below) - unlike search, which has no
+        canonical-content identity of its own and must never emit one.
+    $robotsContent (string, optional) - overrides the robots meta
+        content that would otherwise be derived from $indexable. Used
+        for the deliberate "noindex, follow" pagination policy: a page
+        2+ shouldn't be indexed as its own destination, but its
+        outbound links should still be crawled - a different policy
+        than the blanket "noindex, nofollow" applied to genuinely
+        non-indexable content like search results.
+    $ogImage, $ogType, $jsonLd - optional, only meaningful when
+        $indexable is true.
 --}}
+@php
+    $showCanonical = $showCanonical ?? $indexable;
+    $robotsContent = $robotsContent ?? ($indexable ? 'index, follow' : 'noindex, nofollow');
+@endphp
 <title>{{ $seoTitle }}</title>
 <meta name="description" content="{{ $seoDescription }}">
+<meta name="robots" content="{{ $robotsContent }}">
+
+@if ($showCanonical && ! empty($canonicalUrl))
+    <link rel="canonical" href="{{ $canonicalUrl }}">
+@endif
 
 @if ($indexable)
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="{{ $canonicalUrl }}">
-
     <meta property="og:type" content="{{ $ogType ?? 'website' }}">
     <meta property="og:title" content="{{ $seoTitle }}">
     <meta property="og:description" content="{{ $seoDescription }}">
@@ -28,8 +51,14 @@
     <meta name="twitter:description" content="{{ $seoDescription }}">
 
     @if (! empty($jsonLd))
-        <script type="application/ld+json">{!! json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+        {{--
+            JSON_HEX_TAG/AMP/APOS/QUOT escape <, >, &, ', " as \uXXXX
+            sequences - the standard safe way to embed JSON inside an
+            HTML script context. Without this, an article title or
+            excerpt containing the literal string "</script>" could
+            close the tag early and inject markup; these flags make
+            that impossible regardless of what real content contains.
+        --}}
+        <script type="application/ld+json">{!! json_encode($jsonLd, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) !!}</script>
     @endif
-@else
-    <meta name="robots" content="noindex, nofollow">
 @endif

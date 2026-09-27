@@ -28,14 +28,22 @@ class CategoryController extends Controller
         // of inventing a parallel taxonomy/browsing system.
         $topics = $category->topics()->where('is_active', true)->orderBy('name')->get();
 
+        // Same deliberate pagination SEO policy as /latest - see
+        // LatestController and partials/seo.blade.php.
+        $isFirstPage = $articles->currentPage() <= 1;
+
         return view('public.category', [
             'category' => $category,
             'articles' => $articles,
             'topics' => $topics,
             'seoTitle' => $category->name.' — '.config('app.name', 'EPIC World'),
             'seoDescription' => $category->description ?? "The latest {$category->name} coverage.",
-            'canonicalUrl' => route('category.show', $category),
-            'indexable' => true,
+            'canonicalUrl' => $isFirstPage
+                ? route('category.show', $category)
+                : route('category.show', [$category, 'page' => $articles->currentPage()]),
+            'indexable' => $isFirstPage,
+            'showCanonical' => true,
+            'robotsContent' => $isFirstPage ? 'index, follow' : 'noindex, follow',
         ]);
     }
 }
