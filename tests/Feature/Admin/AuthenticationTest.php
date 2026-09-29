@@ -60,4 +60,37 @@ class AuthenticationTest extends TestCase
     {
         $this->get('/admin/stories')->assertRedirect('/login');
     }
+
+    /**
+     * Milestone 17: Auth::attempt() previously had no rate limiting at
+     * all behind it. The 6th attempt within a minute (5 allowed) for
+     * the same email+IP must be throttled, not silently accepted into
+     * another credential check.
+     */
+    public function test_repeated_failed_login_attempts_are_throttled(): void
+    {
+        $user = User::factory()->editor()->create(['password' => bcrypt('correct-password')]);
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->post('/login', ['email' => $user->email, 'password' => 'wrong-password'])
+                ->assertSessionHasErrors('email');
+        }
+
+        $response = $this->post('/login', ['email' => $user->email, 'password' => 'wrong-password']);
+
+        $response->assertStatus(429);
+    }
+
+    public function test_the_login_throttle_does_not_block_a_correct_attempt_within_the_limit(): void
+    {
+        $user = User::factory()->editor()->create(['password' => bcrypt('correct-password')]);
+
+        $this->post('/login', ['email' => $user->email, 'password' => 'wrong-password'])
+            ->assertSessionHasErrors('email');
+
+        $response = $this->post('/login', ['email' => $user->email, 'password' => 'correct-password']);
+
+        $response->assertRedirect(route('admin.dashboard'));
+        $this->assertAuthenticatedAs($user);
+    }
 }

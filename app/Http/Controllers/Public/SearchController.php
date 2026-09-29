@@ -22,9 +22,17 @@ class SearchController extends Controller
 {
     private const PER_PAGE = 20;
 
+    // Milestone 17: bounds the query text itself, independent of the
+    // LIKE-pattern escaping below - an arbitrarily long ?q= is still a
+    // single indexed-ish, paginated query either way, but there is no
+    // legitimate search phrase anywhere near this long, so trimming
+    // before it ever reaches the database keeps a pathological input
+    // from being processed at all.
+    private const MAX_QUERY_LENGTH = 200;
+
     public function index(Request $request): View
     {
-        $query = trim((string) $request->query('q', ''));
+        $query = trim(mb_substr((string) $request->query('q', ''), 0, self::MAX_QUERY_LENGTH));
 
         // An empty or whitespace-only query gets a validation/empty
         // state, never an unscoped "all published articles" listing -

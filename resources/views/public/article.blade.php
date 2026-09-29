@@ -48,7 +48,7 @@
         @include('partials.ad-slot', ['slot' => 'article-top'])
 
         <div class="prose prose-slate mt-6 max-w-none">
-            {!! $article->content !!}
+            {!! $article->displayContentHtml() !!}
         </div>
 
         @include('partials.ad-slot', ['slot' => 'article-bottom'])

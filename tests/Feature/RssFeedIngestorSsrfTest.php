@@ -70,6 +70,41 @@ class RssFeedIngestorSsrfTest extends TestCase
         $this->assertNull($feed->refresh()->last_error);
     }
 
+    /**
+     * Milestone 17: validateUrl() only checks the URL we were given -
+     * a feed that passes that check could still redirect to a private
+     * or internal address at request time. Laravel's HTTP client
+     * follows redirects by default, so this proves the ingestor
+     * disables that and fails closed on a 3xx instead of silently
+     * following it anywhere.
+     */
+    public function test_a_feed_url_that_redirects_is_rejected_rather_than_followed(): void
+    {
+        $feed = $this->makeFeed('https://example.com/feed.xml');
+        Http::fake([
+            $feed->url => Http::response('', 302, ['Location' => 'http://169.254.169.254/latest/meta-data/']),
+        ]);
+
+        $stories = app(RssFeedIngestor::class)->ingest($feed);
+        $feed->refresh();
+
+        $this->assertCount(0, $stories);
+        $this->assertStringContainsString('redirected', $feed->last_error);
+        $this->assertNotNull($feed->last_failure_at);
+    }
+
+    public function test_an_oversized_feed_response_is_rejected(): void
+    {
+        $feed = $this->makeFeed('https://example.com/feed.xml');
+        Http::fake([$feed->url => Http::response(str_repeat('a', 5_000_001), 200)]);
+
+        $stories = app(RssFeedIngestor::class)->ingest($feed);
+        $feed->refresh();
+
+        $this->assertCount(0, $stories);
+        $this->assertStringContainsString('5 MB limit', $feed->last_error);
+    }
+
     private function makeFeed(string $url): SourceFeed
     {
         $source = Source::create(['name' => 'ssrf-test-source', 'slug' => 'ssrf-test-source-'.uniqid()]);

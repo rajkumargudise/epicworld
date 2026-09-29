@@ -131,6 +131,23 @@ class GeminiProviderTest extends TestCase
         $this->assertStringNotContainsString('super-secret-key', $result->error ?? '');
     }
 
+    public function test_the_api_key_travels_as_a_header_never_in_the_request_url(): void
+    {
+        Http::fake([
+            '*generativelanguage*' => Http::response($this->geminiEnvelope(json_encode([
+                'title' => 'A generated title',
+                'body' => 'A generated body.',
+            ])), 200),
+        ]);
+
+        $this->provider()->respond($this->request());
+
+        Http::assertSent(function ($request) {
+            return ! str_contains($request->url(), 'super-secret-key')
+                && $request->hasHeader('x-goog-api-key', 'super-secret-key');
+        });
+    }
+
     private function provider(): GeminiProvider
     {
         return new GeminiProvider([

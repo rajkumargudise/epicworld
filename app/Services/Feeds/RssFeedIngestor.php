@@ -36,9 +36,22 @@ class RssFeedIngestor
         try {
             $this->validateUrl($sourceFeed->url);
 
+            // allow_redirects disabled deliberately: validateUrl() above
+            // only checks the URL we were given. Laravel's HTTP client
+            // follows redirects by default, and a feed URL that passes
+            // validation could still redirect to a private/internal
+            // address at request time - the exact SSRF this guard
+            // exists to close. A feed that genuinely redirects fails
+            // with a clear 3xx error below rather than being silently
+            // followed anywhere.
             $response = Http::timeout(10)
+                ->withOptions(['allow_redirects' => false])
                 ->accept('application/rss+xml, application/atom+xml, application/xml, text/xml')
                 ->get($sourceFeed->url);
+
+            if ($response->redirect()) {
+                throw new RuntimeException('Feed URL redirected (HTTP '.$response->status().'); redirects are not followed for SSRF safety.');
+            }
 
             if ($response->failed()) {
                 throw new RuntimeException('Feed request returned HTTP '.$response->status().'.');

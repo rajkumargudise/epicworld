@@ -54,9 +54,18 @@ class GeminiProvider implements AiProvider
         $model = $request->model ?? $this->config['model'];
 
         try {
+            // Milestone 17: the key travels as the x-goog-api-key
+            // header (an alternative Gemini's API explicitly supports)
+            // rather than in the URL's query string. A URL is far more
+            // likely than a header to end up captured somewhere this
+            // application doesn't control - an HTTP client's own debug
+            // log, an error tracker's breadcrumb, an intermediate
+            // proxy's access log - so keeping the key out of it is a
+            // real reduction in where it could leak, not just cosmetic.
             $response = Http::timeout($this->config['timeout'])
+                ->withHeaders(['x-goog-api-key' => $apiKey])
                 ->post(
-                    rtrim($this->config['base_url'], '/')."/models/{$model}:generateContent?key={$apiKey}",
+                    rtrim($this->config['base_url'], '/')."/models/{$model}:generateContent",
                     ['contents' => [['parts' => [['text' => $this->buildPrompt($request)]]]]],
                 );
         } catch (ConnectionException) {

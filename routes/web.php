@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ArticleController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\FeedController;
 use App\Http\Controllers\Admin\StoryController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Public\ArticleController as PublicArticleController;
@@ -54,7 +55,7 @@ Route::get('/tag/{tag:slug}', [TagController::class, 'show'])->name('tag.show');
 // Laravel's own 'web' guard - see AuthenticatedSessionController.
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
-    Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+    Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:login');
 });
 
 Route::middleware('auth')->group(function () {
@@ -65,6 +66,8 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/stories', [StoryController::class, 'index'])->name('stories.index');
         Route::get('/stories/{story}', [StoryController::class, 'show'])->name('stories.show');
+
+        Route::get('/feeds', [FeedController::class, 'index'])->name('feeds.index');
 
         Route::get('/articles/{article}/edit', [ArticleController::class, 'edit'])->name('articles.edit');
         Route::put('/articles/{article}', [ArticleController::class, 'update'])->name('articles.update');

@@ -41,7 +41,7 @@ trait CreatesPublicFixtures
             'title' => 'A published article',
             'slug' => 'a-published-article-'.uniqid(),
             'dek' => 'A short standfirst for this article.',
-            'content' => '<p>'.str_repeat('This is the published article body. ', 20).'</p>',
+            'content' => str_repeat('This is the published article body. ', 20),
             'excerpt' => 'A short excerpt.',
             'status' => ArticleStatus::Published,
             'published_at' => now()->subHour(),

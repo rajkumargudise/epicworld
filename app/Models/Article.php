@@ -123,6 +123,33 @@ class Article extends Model
     }
 
     /**
+     * content is authored as plain text - the admin editor is a plain
+     * textarea (never a rich-text/HTML editor), and AiArticleGenerator
+     * only ever produces a plain prose string (see AiArticleGenerator's
+     * OUTPUT_SCHEMA, where 'body' is typed 'string' with no markup
+     * instruction). No part of the editorial pipeline authors or
+     * expects HTML here. This renders it as the public template's
+     * .prose typography intends - paragraphs, one per blank line -
+     * without ever letting stored text become live markup: every
+     * character is escaped with e() *before* paragraph/line-break tags
+     * are added around it, so a stored `<script>` (from a compromised
+     * source, a citation, or an editor's own input) can never execute
+     * in a visitor's browser. This is the one place that turns content
+     * into HTML for display; every public and admin view should call
+     * this rather than rendering $article->content directly.
+     */
+    public function displayContentHtml(): string
+    {
+        $paragraphs = preg_split('/\R{2,}/', trim((string) $this->content)) ?: [];
+
+        return collect($paragraphs)
+            ->map(fn (string $paragraph) => trim($paragraph))
+            ->filter(fn (string $paragraph) => $paragraph !== '')
+            ->map(fn (string $paragraph) => '<p>'.nl2br(e($paragraph), false).'</p>')
+            ->implode("\n");
+    }
+
+    /**
      * A small, deterministic related-content mechanism - no AI
      * similarity, no embeddings, no popularity scoring that doesn't
      * exist. Fills up to $limit slots in a fixed preference order,
