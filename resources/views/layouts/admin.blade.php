@@ -14,6 +14,7 @@
                 <a href="{{ route('admin.dashboard') }}" class="font-semibold">EPIC World</a>
                 <a href="{{ route('admin.dashboard') }}" class="text-slate-600 hover:text-slate-900">Dashboard</a>
                 <a href="{{ route('admin.stories.index') }}" class="text-slate-600 hover:text-slate-900">Stories</a>
+                <a href="{{ route('admin.feeds.index') }}" class="text-slate-600 hover:text-slate-900">Feeds</a>
             </nav>
             <div class="flex items-center gap-4 text-sm">
                 <span class="text-slate-500">{{ auth()->user()->name }} &middot; {{ auth()->user()->role ?? 'no role' }}</span>

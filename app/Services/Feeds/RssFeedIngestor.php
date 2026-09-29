@@ -257,9 +257,51 @@ class RssFeedIngestor
     private function validateUrl(string $url): void
     {
         $parsed = parse_url($url);
+        $host = $parsed['host'] ?? null;
 
-        if (! in_array($parsed['scheme'] ?? null, ['http', 'https'], true) || empty($parsed['host'])) {
+        if (! in_array($parsed['scheme'] ?? null, ['http', 'https'], true) || empty($host)) {
             throw new InvalidArgumentException('Feed URL must use HTTP or HTTPS.');
         }
+
+        if ($this->isInternalHost($host)) {
+            throw new InvalidArgumentException('Feed URL must not target a private, loopback, or internal address.');
+        }
+    }
+
+    /**
+     * A minimal, network-free SSRF guard: rejects a feed URL that points
+     * at an obviously internal target - a loopback/private/link-local
+     * literal IP (including the cloud metadata address,
+     * 169.254.169.254) or a well-known internal hostname - so a
+     * misconfigured or malicious feed URL can never turn a scheduled
+     * discovery run into a way to reach this server's own network.
+     *
+     * Deliberately does not resolve DNS for ordinary hostnames: that
+     * would add a real network call to every ingest (undesirable in
+     * tests, and slow in production) for a feed list that is
+     * operator-configured, not arbitrary public input - and it would
+     * open its own DNS-rebinding TOCTOU gap between the check and the
+     * actual request. Literal internal addresses are the concrete,
+     * checkable threat this guards against.
+     */
+    private function isInternalHost(string $host): bool
+    {
+        $host = strtolower(trim($host, '[]'));
+
+        if (in_array($host, ['localhost', '0.0.0.0'], true)) {
+            return true;
+        }
+
+        foreach (['.local', '.internal', '.localdomain'] as $suffix) {
+            if (str_ends_with($host, $suffix)) {
+                return true;
+            }
+        }
+
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            return filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false;
+        }
+
+        return false;
     }
 }
