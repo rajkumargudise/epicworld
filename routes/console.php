@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\DiscoverStories;
+use App\Console\Commands\ProcessEditorialJobs;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -37,4 +38,29 @@ if (config('discovery.schedule.enabled')) {
         ->cron("*/{$frequencyMinutes} * * * *")
         ->withoutOverlapping($lockMinutes)
         ->onFailure(fn () => Log::error('Scheduled discovery run reported failure.'));
+}
+
+/*
+ * Scheduled editorial job processing: invokes editorial:process
+ * (App\Console\Commands\ProcessEditorialJobs), which calls
+ * App\Services\Editorial\EditorialJobProcessor to run pending
+ * EditorialJobs through the existing AiArticleGenerator, one job at a
+ * time. This only ever reaches Draft or Review - it never approves or
+ * publishes anything; see EditorialJobProcessor's docblock.
+ *
+ * Mirrors the discovery schedule entry above exactly: withoutOverlapping()
+ * at the scheduler level, plus the command's own named cache lock
+ * (ProcessEditorialJobs::LOCK_KEY) as the invocation-path-independent
+ * guarantee, both backed by the database cache store - no Redis
+ * required on Hostinger shared hosting.
+ */
+if (config('editorial.schedule.enabled')) {
+    $frequencyMinutes = max(1, min(59, (int) config('editorial.schedule.frequency_minutes', 10)));
+    $lockMinutes = max(1, intdiv((int) config('editorial.schedule.lock_seconds', 1800), 60));
+    $batchLimit = max(1, (int) config('editorial.schedule.batch_limit', 5));
+
+    Schedule::command(ProcessEditorialJobs::class, ['--limit' => $batchLimit])
+        ->cron("*/{$frequencyMinutes} * * * *")
+        ->withoutOverlapping($lockMinutes)
+        ->onFailure(fn () => Log::error('Scheduled editorial processing run reported failure.'));
 }
