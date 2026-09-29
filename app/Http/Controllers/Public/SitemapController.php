@@ -35,6 +35,7 @@ class SitemapController extends Controller
         echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
 
         $this->writeDiscoveryUrls();
+        $this->writeStaticUrls();
         $this->writeCategoryUrls();
         $this->writeTagUrls();
         $this->writeArticleUrls();
@@ -57,6 +58,15 @@ class SitemapController extends Controller
 
         $this->writeUrl(route('home'));
         $this->writeUrl(route('latest'));
+    }
+
+    /**
+     * Milestone 18: static, always-indexable pages that exist
+     * independently of editorial content - currently just /privacy.
+     */
+    private function writeStaticUrls(): void
+    {
+        $this->writeUrl(route('privacy'));
     }
 
     /**

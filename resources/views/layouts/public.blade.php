@@ -42,13 +42,13 @@
         </div>
     </header>
 
-    @include('partials.ad-slot', ['slot' => 'top-banner'])
+    <x-ad-slot name="site_top" :context="$context ?? 'unknown'" />
 
     <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
         @yield('content')
     </main>
 
-    @include('partials.ad-slot', ['slot' => 'footer-banner'])
+    <x-ad-slot name="site_footer" :context="$context ?? 'unknown'" />
 
     <footer class="border-t border-slate-200 bg-slate-50">
         <div class="mx-auto max-w-6xl px-4 py-8 text-sm text-slate-500 sm:px-6">
@@ -65,7 +65,11 @@
                     </div>
                 </div>
             @endif
-            <p>&copy; {{ now()->year }} EPIC World. All rights reserved.</p>
+            <p>
+                &copy; {{ now()->year }} EPIC World. All rights reserved.
+                <span aria-hidden="true">&middot;</span>
+                <a href="{{ route('privacy') }}" class="hover:text-indigo-600">Privacy</a>
+            </p>
         </div>
     </footer>
 </body>

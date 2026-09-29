@@ -1,5 +1,7 @@
 @extends('layouts.public')
 
+@php($context = 'home')
+
 @section('content')
     @if ($breaking->isNotEmpty())
         <div class="mb-8 flex items-center gap-3 overflow-x-auto rounded-lg bg-slate-900 px-4 py-3 text-sm text-white">
@@ -69,7 +71,7 @@
         </section>
     @endif
 
-    @include('partials.ad-slot', ['slot' => 'homepage-mid'])
+    <x-ad-slot name="home_between_sections" :context="$context" />
 
     @foreach ($categorySections as $section)
         <section class="mb-12">

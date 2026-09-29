@@ -1,5 +1,7 @@
 @extends('layouts.public')
 
+@php($context = 'category')
+
 @section('content')
     <h1 class="mb-2 text-2xl font-bold text-slate-900">{{ $category->name }}</h1>
     @if ($category->description)

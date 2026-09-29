@@ -230,6 +230,10 @@ After deploying, verify in order:
 7. Confirm `APP_DEBUG=false` is in effect: visit a route that 404s
    (`/article/does-not-exist`) and verify it shows a plain "not found"
    page, not a stack trace.
+8. `GET /privacy` returns 200.
+9. View source on `/` and any article: confirm no `data-ad-slot`
+   markup appears (monetization must still be `false` at this point —
+   see section 4a).
 
 ## 4. Production `.env` contract
 
@@ -268,7 +272,30 @@ GEMINI_API_KEY=
 
 DISCOVERY_SCHEDULE_ENABLED=true
 EDITORIAL_SCHEDULE_ENABLED=true
+
+MONETIZATION_ENABLED=false     # see 4a - leave false through go-live
+MONETIZATION_PROVIDER=
 ```
+
+### 4a. Monetization (Milestone 18)
+
+`MONETIZATION_ENABLED` must stay `false` through this deployment and
+go-live. Nothing in this codebase yet knows how to talk to an actual
+advertising provider — `MONETIZATION_PROVIDER` only names a future
+adapter and has no effect on its own (see `config/monetization.php`
+and `App\Services\Monetization\AdSlotRegistry`). Turning
+`MONETIZATION_ENABLED` on before then would do nothing except reserve
+empty, dimensioned ad containers on the public site — no ad markup, no
+publisher ID, and no third-party request are added until a real
+provider adapter is built as its own later change. Do not commit a
+real publisher ID or provider adapter as part of this deployment.
+
+Before monetization is ever turned on in production: read `/privacy`
+on the live site (it documents the current, honest state — "not
+active" — and what must happen before it is) and complete the legal/
+consent review it calls for. Turning `MONETIZATION_ENABLED=true`
+without that review happening first is a product/legal decision, not
+a technical one this deployment guide makes for you.
 
 `SESSION_SECURE_COOKIE=true` requires the connection Laravel actually
 sees to be HTTPS. If Hostinger terminates TLS at a proxy/load balancer

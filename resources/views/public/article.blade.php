@@ -1,5 +1,9 @@
 @extends('layouts.public')
 
+@php
+    $context = 'article';
+@endphp
+
 @section('content')
     <article class="mx-auto max-w-3xl">
         @if ($article->category)
@@ -45,13 +49,13 @@
             <img src="{{ $article->featured_image }}" alt="{{ $article->title }}" class="mt-6 w-full rounded-lg object-cover">
         @endif
 
-        @include('partials.ad-slot', ['slot' => 'article-top'])
+        <x-ad-slot name="article_top" :context="$context" />
 
         <div class="prose prose-slate mt-6 max-w-none">
             {!! $article->displayContentHtml() !!}
         </div>
 
-        @include('partials.ad-slot', ['slot' => 'article-bottom'])
+        <x-ad-slot name="article_bottom" :context="$context" />
 
         @if ($article->tags->isNotEmpty())
             <div class="mt-8 flex flex-wrap gap-2">
