@@ -30,7 +30,7 @@ class WorldNewsSourceSeeder extends Seeder
         ['bbc-news', 'BBC News', 'bbc.co.uk', 'https://www.bbc.co.uk/news', 'publisher', 'global-affairs', 'BBC World', 'https://feeds.bbci.co.uk/news/world/rss.xml', 20],
         ['al-jazeera', 'Al Jazeera', 'aljazeera.com', 'https://www.aljazeera.com', 'publisher', 'global-affairs', 'Al Jazeera', 'https://www.aljazeera.com/xml/rss/all.xml', 20],
         ['the-guardian', 'The Guardian', 'theguardian.com', 'https://www.theguardian.com', 'publisher', 'global-affairs', 'Guardian World', 'https://www.theguardian.com/world/rss', 20],
-        ['deutsche-welle', 'DW', 'dw.com', 'https://www.dw.com', 'publisher', 'global-affairs', 'DW Top Stories', 'https://rss.dw.com/rdf/rss-en-all', 30],
+        ['deutsche-welle', 'DW', 'dw.com', 'https://www.dw.com', 'publisher', 'global-affairs', 'DW Top Stories', 'https://rss.dw.com/xml/rss-en-all', 30],
         ['france-24', 'France 24', 'france24.com', 'https://www.france24.com', 'publisher', 'global-affairs', 'France 24', 'https://www.france24.com/en/rss', 30],
         ['npr', 'NPR', 'npr.org', 'https://www.npr.org', 'publisher', 'global-affairs', 'NPR News', 'https://feeds.npr.org/1001/rss.xml', 30],
 
