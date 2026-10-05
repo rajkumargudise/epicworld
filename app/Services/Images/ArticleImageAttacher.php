@@ -19,7 +19,15 @@ class ArticleImageAttacher
             return false;
         }
 
-        $hit = $this->finder->find($query ?: (string) $article->title);
+        // The AI's suggested words first, then the title, then the category.
+        $hit = null;
+        foreach (array_filter([$query, (string) $article->title, $article->category?->name]) as $candidate) {
+            $hit = $this->finder->find((string) $candidate);
+
+            if ($hit !== null) {
+                break;
+            }
+        }
 
         if ($hit === null) {
             return false;

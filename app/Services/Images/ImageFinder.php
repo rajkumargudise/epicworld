@@ -32,19 +32,38 @@ class ImageFinder
             return null;
         }
 
-        foreach ([fn () => $this->pexels($query), fn () => $this->unsplash($query), fn () => $this->openverse($query)] as $provider) {
-            try {
-                $hit = $provider();
-            } catch (Throwable) {
-                $hit = null;
-            }
+        // Specific searches often find nothing, so retry with fewer words.
+        foreach ($this->variants($query) as $variant) {
+            foreach ([fn () => $this->pexels($variant), fn () => $this->unsplash($variant), fn () => $this->openverse($variant)] as $provider) {
+                try {
+                    $hit = $provider();
+                } catch (Throwable) {
+                    $hit = null;
+                }
 
-            if ($hit !== null && $this->isSafeUrl($hit['url'])) {
-                return $hit;
+                if ($hit !== null && $this->isSafeUrl($hit['url'])) {
+                    return $hit;
+                }
             }
         }
 
         return null;
+    }
+
+    /**
+     * "full phrase" -> first 4 words -> first 2 words.
+     *
+     * @return array<int, string>
+     */
+    private function variants(string $query): array
+    {
+        $words = array_values(array_filter(explode(' ', $query), fn (string $w) => mb_strlen($w) >= 3));
+
+        return array_values(array_unique(array_filter([
+            $query,
+            count($words) > 4 ? implode(' ', array_slice($words, 0, 4)) : null,
+            count($words) > 2 ? implode(' ', array_slice($words, 0, 2)) : null,
+        ])));
     }
 
     private function pexels(string $query): ?array
