@@ -256,10 +256,10 @@ class RssFeedIngestor
         $identity = $externalId ?? $sourceUrl ?? $title;
         $contentHash = hash('sha256', $identity);
 
-        // external_id is a varchar(255) column; some publishers use
+        // external_id is a varchar(191) column (Schema::defaultStringLength); some publishers use
         // very long article URLs as their GUID. A deterministic digest
         // keeps the id stable across runs without overflowing it.
-        if ($externalId !== null && mb_strlen($externalId) > 255) {
+        if ($externalId !== null && mb_strlen($externalId) > 191) {
             $externalId = 'sha256:'.hash('sha256', $externalId);
         }
 

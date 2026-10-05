@@ -40,7 +40,7 @@ class RssFeedIngestorTest extends TestCase
     public function test_an_overlong_guid_is_stored_as_a_short_stable_digest(): void
     {
         $feed = $this->makeFeed();
-        $longGuid = 'https://example.com/'.str_repeat('very-long-slug-', 40);
+        $longGuid = 'https://example.com/'.str_repeat("very-long-slug-", 40);
         Http::fake([$feed->url => Http::response(
             '<?xml version="1.0"?><rss version="2.0"><channel><title>T</title><item><title>Long guid story</title>'
             .'<link>https://example.com/s</link><guid>'.$longGuid.'</guid></item></channel></rss>',
@@ -50,7 +50,7 @@ class RssFeedIngestorTest extends TestCase
         app(RssFeedIngestor::class)->ingest($feed);
 
         $stored = \DB::table('source_story')->value('external_id');
-        $this->assertLessThanOrEqual(255, strlen($stored));
+        $this->assertLessThanOrEqual(191, strlen($stored));
         $this->assertStringStartsWith('sha256:', $stored);
     }
 
