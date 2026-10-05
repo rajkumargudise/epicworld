@@ -28,6 +28,25 @@ class GeminiProviderTest extends TestCase
         $this->assertSame('A generated title', $result->data['title']);
     }
 
+    public function test_an_overloaded_model_is_retried_then_falls_back_to_the_lighter_gemini_model(): void
+    {
+        $calls = [];
+        Http::fake(function ($request) use (&$calls) {
+            $calls[] = $request->url();
+
+            return str_contains($request->url(), 'flash-lite')
+                ? Http::response($this->geminiEnvelope(json_encode(['title' => 'T', 'body' => 'B'])), 200)
+                : Http::response(['error' => ['message' => 'high demand']], 503);
+        });
+
+        $provider = new GeminiProvider(['api_key' => 'k', 'model' => 'gemini-flash-latest', 'fallback_model' => 'gemini-flash-lite-latest', 'base_url' => 'https://generativelanguage.googleapis.com/v1beta', 'timeout' => 5]);
+        $result = $provider->respond($this->request());
+
+        $this->assertTrue($result->successful());
+        $this->assertSame('gemini-flash-lite-latest', $result->model);
+        $this->assertCount(3, $calls); // main, retry of main, fallback
+    }
+
     public function test_missing_api_key_fails_without_making_a_request(): void
     {
         Http::fake();

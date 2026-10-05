@@ -47,7 +47,10 @@ class NoSilentFallbackTest extends TestCase
         $result = app(AiProviderManager::class)->resolve()->respond($this->request());
 
         $this->assertSame(AiResultStatus::ProviderError, $result->status);
-        Http::assertSentCount(1);
+        // Gemini retries once and then tries its own lighter model on an overload (5xx) -
+        // 3 requests - but every one of them goes to Gemini, never to another provider.
+        Http::assertSentCount(3);
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'generativelanguage.googleapis.com'));
         $this->assertSame(0, $fallback->callCount());
     }
 

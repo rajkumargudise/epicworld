@@ -62,15 +62,30 @@ class GeminiProvider implements AiProvider
             // log, an error tracker's breadcrumb, an intermediate
             // proxy's access log - so keeping the key out of it is a
             // real reduction in where it could leak, not just cosmetic.
-            $response = Http::timeout($this->config['timeout'])
+            $payload = [
+                'contents' => [['parts' => [['text' => $this->buildPrompt($request)]]]],
+                'generationConfig' => ['responseMimeType' => 'application/json', 'maxOutputTokens' => 8192, 'temperature' => 0.7],
+            ];
+
+            $call = fn (string $useModel) => Http::timeout($this->config['timeout'])
                 ->withHeaders(['x-goog-api-key' => $apiKey])
-                ->post(
-                    rtrim($this->config['base_url'], '/')."/models/{$model}:generateContent",
-                    [
-                        'contents' => [['parts' => [['text' => $this->buildPrompt($request)]]]],
-                        'generationConfig' => ['responseMimeType' => 'application/json', 'maxOutputTokens' => 8192, 'temperature' => 0.7],
-                    ],
-                );
+                ->post(rtrim($this->config['base_url'], '/')."/models/{$useModel}:generateContent", $payload);
+
+            $response = $call($model);
+
+            // Google's models are sometimes briefly overloaded (HTTP 5xx). Retry
+            // once, then use the configured lighter Gemini model. This stays
+            // within Gemini - it never switches to a different AI company.
+            if ($response->serverError()) {
+                $response = $call($model);
+            }
+
+            $fallback = $this->config['fallback_model'] ?? null;
+
+            if ($response->serverError() && filled($fallback) && $fallback !== $model) {
+                $model = $fallback;
+                $response = $call($model);
+            }
         } catch (ConnectionException) {
             return AiResult::failure(
                 AiResultStatus::Timeout,

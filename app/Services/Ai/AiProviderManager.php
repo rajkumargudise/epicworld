@@ -37,6 +37,7 @@ class AiProviderManager
             'gemini' => new GeminiProvider([
                 'api_key' => Setting::read('gemini_api_key') ?? $config['api_key'] ?? null,
                 'model' => Setting::read('gemini_model') ?? $config['model'] ?? 'gemini-flash-latest',
+                'fallback_model' => Setting::read('gemini_fallback_model') ?? $config['fallback_model'] ?? null,
                 'base_url' => $config['base_url'] ?? 'https://generativelanguage.googleapis.com/v1beta',
                 'timeout' => $config['timeout'] ?? config('ai.timeout', 30),
             ]),
