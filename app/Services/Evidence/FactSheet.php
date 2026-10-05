@@ -94,6 +94,55 @@ final readonly class FactSheet implements Countable, IteratorAggregate
     }
 
     /**
+     * A tolerant variant of supports() for AI citations: true when the
+     * claim is verbatim in the evidence, OR when most of the claim's
+     * meaningful words (default 60%) appear together in a single piece of
+     * reported evidence. A faithful paraphrase of a headline passes; a
+     * claim whose words are mostly not in the evidence does not.
+     */
+    public function supportsLoosely(string $claim, float $threshold = 0.6): bool
+    {
+        if ($this->supports($claim)) {
+            return true;
+        }
+
+        $claimWords = $this->significantWords($claim);
+
+        if (count($claimWords) < 3) {
+            return false;
+        }
+
+        foreach ($this->facts as $fact) {
+            foreach ($fact->reportedValues() as $value) {
+                $valueWords = $this->significantWords((string) $value);
+
+                if ($valueWords === []) {
+                    continue;
+                }
+
+                $shared = count(array_intersect($claimWords, $valueWords));
+
+                if ($shared / count($claimWords) >= $threshold) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function significantWords(string $text): array
+    {
+        $words = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($text), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        return array_values(array_unique(array_filter($words, fn (string $w) => mb_strlen($w) >= 3
+            && ! in_array($w, ['the', 'and', 'for', 'with', 'that', 'this', 'from', 'are', 'was', 'were', 'has', 'have', 'had', 'its', 'his', 'her', 'their', 'into', 'over', 'after', 'about'], true))));
+    }
+
+    /**
      * The shape an AiRequest carries as evidence. Kept as a distinct
      * method (rather than reusing toArray() by convention) so the
      * AI-facing contract can diverge from the storage shape later

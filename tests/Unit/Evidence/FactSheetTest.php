@@ -80,6 +80,19 @@ class FactSheetTest extends TestCase
         $this->assertFalse($sheet->supports('   '));
     }
 
+    public function test_loose_support_accepts_paraphrases_but_rejects_invented_claims(): void
+    {
+        $sheet = FactSheet::fromArray([
+            ['source_id' => 1, 'source_name' => 'BBC', 'reported' => ['title' => 'Djokovic beats top seed Zverev to reach China Open semi-finals']],
+        ]);
+
+        $this->assertTrue($sheet->supportsLoosely('Novak Djokovic defeats top seed Zverev to reach China Open semifinals'));
+        $this->assertTrue($sheet->supportsLoosely('beats top seed Zverev'));
+        $this->assertFalse($sheet->supportsLoosely('The prime minister announced a new tax on imported cars'));
+        $this->assertFalse($sheet->supportsLoosely('Zverev wins'));
+        $this->assertFalse((FactSheet::fromArray([]))->supportsLoosely('anything at all here'));
+    }
+
     public function test_supports_on_an_empty_sheet_is_always_false(): void
     {
         $sheet = FactSheet::fromArray([]);

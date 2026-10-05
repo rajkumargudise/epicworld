@@ -225,7 +225,7 @@ class AiArticleGenerator
         $unsupported = [];
 
         foreach ($citations as $citation) {
-            if (! is_string($citation) || ! $factSheet->supports($citation)) {
+            if (! is_string($citation) || ! $factSheet->supportsLoosely($citation)) {
                 $unsupported[] = is_string($citation) ? $citation : '(non-string citation)';
             }
         }
