@@ -34,10 +34,10 @@ class StoryTemplateTest extends TestCase
         $this->get(route('article.show', $article))->assertOk()->assertSee('Part 1');
     }
 
-    public function test_the_home_page_renders_the_live_wire_and_lead_story(): void
+    public function test_the_home_page_renders_live_news_and_the_lead_story(): void
     {
         $this->publishedArticle(['title' => 'Lead story headline']);
 
-        $this->get('/')->assertOk()->assertSee('Live wire')->assertSee('Lead story headline');
+        $this->get('/')->assertOk()->assertSee('Live news')->assertSee('Lead story headline');
     }
 }

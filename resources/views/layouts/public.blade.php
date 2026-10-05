@@ -23,8 +23,12 @@
             </a>
 
             <nav class="hidden items-center gap-0.5 whitespace-nowrap text-sm font-medium text-muted xl:flex" aria-label="Primary">
-                <a href="{{ route('latest') }}" class="rounded-full px-3.5 py-1.5 transition hover:text-ink {{ request()->routeIs('latest') ? 'bg-surface-2 text-ink' : '' }}">Latest</a>
-                @foreach (($navCategories ?? collect())->reject(fn ($c) => $c->slug === 'latest')->take(5) as $navCategory)
+                <a href="{{ route('live') }}" class="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-red-400 transition hover:text-red-300"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500"></span>Live</a>
+                @foreach (['world' => 'World', 'news' => 'News', 'local' => 'Local', 'videos' => 'Videos'] as $navKey => $navLabel)
+                    <a href="{{ route('live.scope', $navKey) }}" class="rounded-full px-3.5 py-1.5 transition hover:text-ink {{ request()->is('live/'.$navKey) ? 'bg-surface-2 text-ink' : '' }}">{{ $navLabel }}</a>
+                @endforeach
+                <a href="{{ route('latest') }}" class="rounded-full px-3.5 py-1.5 transition hover:text-ink {{ request()->routeIs('latest') ? 'bg-surface-2 text-ink' : '' }}">Stories</a>
+                @foreach (($navCategories ?? collect())->reject(fn ($c) => $c->slug === 'latest')->take(2) as $navCategory)
                     <a href="{{ route('category.show', $navCategory) }}"
                        class="rounded-full px-3.5 py-1.5 transition hover:text-ink {{ request()->is('category/'.$navCategory->slug) ? 'bg-surface-2 text-ink' : '' }}">{{ $navCategory->name }}</a>
                 @endforeach
@@ -54,7 +58,12 @@
                        class="w-full rounded-full border border-line bg-surface px-4 py-2 text-sm text-ink outline-none placeholder:text-muted focus:border-accent">
             </form>
             <nav class="grid grid-cols-2 gap-1 p-3 text-sm font-medium text-ink-soft" aria-label="Primary, mobile">
-                <a href="{{ route('latest') }}" class="rounded-lg px-3 py-2 hover:bg-surface-2">Latest</a>
+                <a href="{{ route('live') }}" class="rounded-lg px-3 py-2 font-semibold text-red-400 hover:bg-surface-2">&#9679; Live desk</a>
+                <a href="{{ route('live.scope', 'world') }}" class="rounded-lg px-3 py-2 hover:bg-surface-2">World</a>
+                <a href="{{ route('live.scope', 'news') }}" class="rounded-lg px-3 py-2 hover:bg-surface-2">News</a>
+                <a href="{{ route('live.scope', 'local') }}" class="rounded-lg px-3 py-2 hover:bg-surface-2">Local</a>
+                <a href="{{ route('live.scope', 'videos') }}" class="rounded-lg px-3 py-2 hover:bg-surface-2">Videos</a>
+                <a href="{{ route('latest') }}" class="rounded-lg px-3 py-2 hover:bg-surface-2">Stories</a>
                 @foreach (($navCategories ?? collect())->reject(fn ($c) => $c->slug === 'latest') as $navCategory)
                     <a href="{{ route('category.show', $navCategory) }}" class="rounded-lg px-3 py-2 hover:bg-surface-2">{{ $navCategory->name }}</a>
                 @endforeach
@@ -80,7 +89,11 @@
                 <div>
                     <h2 class="text-xs font-semibold uppercase tracking-wider text-muted">Explore</h2>
                     <ul class="mt-4 grid grid-cols-2 gap-x-4 gap-y-2.5 text-sm text-ink-soft">
-                        <li><a href="{{ route('latest') }}" class="transition hover:text-accent">Latest</a></li>
+                        <li><a href="{{ route('live.scope', 'world') }}" class="transition hover:text-accent">World</a></li>
+                        <li><a href="{{ route('live.scope', 'news') }}" class="transition hover:text-accent">News</a></li>
+                        <li><a href="{{ route('live.scope', 'local') }}" class="transition hover:text-accent">Local</a></li>
+                        <li><a href="{{ route('live.scope', 'videos') }}" class="transition hover:text-accent">Videos</a></li>
+                        <li><a href="{{ route('latest') }}" class="transition hover:text-accent">Stories</a></li>
                         @foreach (($navCategories ?? collect())->reject(fn ($c) => $c->slug === 'latest')->take(7) as $navCategory)
                             <li><a href="{{ route('category.show', $navCategory) }}" class="transition hover:text-accent">{{ $navCategory->name }}</a></li>
                         @endforeach

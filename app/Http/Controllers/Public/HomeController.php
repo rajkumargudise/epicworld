@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Models\Category;
+use App\Models\WireItem;
+use App\Services\NewsWire\NewsWireFetcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -86,7 +88,17 @@ class HomeController extends Controller
             ->filter(fn (array $section) => $section['articles']->isNotEmpty())
             ->values();
 
+        $wire = collect(array_keys(config('newswire.scopes')))->mapWithKeys(fn (string $scope) => [
+            $scope => WireItem::articles()->where('scope', $scope)->newest()->take(8)->get(),
+        ]);
+
+        if (config('newswire.enabled') && app(NewsWireFetcher::class)->isStale()) {
+            dispatch(fn () => app(NewsWireFetcher::class)->run())->afterResponse();
+        }
+
         return view('public.home', [
+            'wire' => $wire,
+            'videos' => WireItem::videos()->newest()->take(4)->get(),
             'featured' => $featured,
             'latest' => $latest,
             'breaking' => $breaking,

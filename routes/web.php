@@ -11,6 +11,7 @@ use App\Http\Controllers\Public\ArticleController as PublicArticleController;
 use App\Http\Controllers\Public\CategoryController;
 use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Public\LatestController;
+use App\Http\Controllers\Public\LiveNewsController;
 use App\Http\Controllers\Public\PrivacyController;
 use App\Http\Controllers\Public\RobotsController;
 use App\Http\Controllers\Public\SearchController;
@@ -48,6 +49,10 @@ Route::bind('category', function (string $slug) {
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/robots.txt', [RobotsController::class, 'index'])->name('robots');
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+Route::get('/live', [LiveNewsController::class, 'index'])->name('live');
+Route::get('/live/{scope}', [LiveNewsController::class, 'index'])->whereIn('scope', ['world', 'news', 'local', 'videos'])->name('live.scope');
+Route::get('/live/{scope}/feed', [LiveNewsController::class, 'feed'])->whereIn('scope', ['world', 'news', 'local'])->name('live.feed');
+Route::get('/wire/{item}/{slug?}', [LiveNewsController::class, 'show'])->whereNumber('item')->name('wire.show');
 Route::get('/latest', [LatestController::class, 'index'])->name('latest');
 Route::get('/search', [SearchController::class, 'index'])->name('search');
 Route::get('/category/{category:slug}', [CategoryController::class, 'show'])->name('category.show');

@@ -6,23 +6,27 @@
     $others = $latest->reject(fn ($a) => $lead && $a->id === $lead->id)->values();
     $topStories = $others->take(4);
     $moreLatest = $others->slice(4)->values();
-    $wire = $breaking->merge($others)->unique('id')->take(12);
+    $scopeMeta = config('newswire.scopes');
+    $hasWire = collect($wire)->flatten()->isNotEmpty();
+    $tickerItems = collect($wire)->flatten()->sortByDesc('published_at')->take(14);
 @endphp
 
 @section('content')
-    {{-- Masthead strip: date + live wire --}}
+    {{-- Live strip: date + scrolling headlines --}}
     <div class="mb-6 flex items-center gap-4 overflow-hidden rounded-full border border-line bg-surface px-4 py-2 text-sm">
         <span class="flex shrink-0 items-center gap-2 text-xs font-bold uppercase tracking-wider text-red-400">
-            <span class="h-2 w-2 animate-pulse rounded-full bg-red-500"></span> Live wire
+            <span class="h-2 w-2 animate-pulse rounded-full bg-red-500"></span> Live
         </span>
         <span class="hidden shrink-0 text-xs text-muted sm:inline">{{ now()->format('l, j F Y') }}</span>
-        @if ($wire->isNotEmpty())
+        @if ($tickerItems->isNotEmpty())
             <div class="ticker relative min-w-0 flex-1 overflow-hidden">
                 <div class="ticker-track gap-10">
                     @foreach ([1, 2] as $copy)
                         <div class="flex shrink-0 gap-10 pr-10" @if ($copy === 2) aria-hidden="true" @endif>
-                            @foreach ($wire as $item)
-                                <a href="{{ route('article.show', $item) }}" class="whitespace-nowrap text-ink-soft transition hover:text-accent" @if ($copy === 2) tabindex="-1" @endif>{{ $item->title }}</a>
+                            @foreach ($tickerItems as $item)
+                                <a href="{{ $item->path() }}" class="whitespace-nowrap text-ink-soft transition hover:text-accent" @if ($copy === 2) tabindex="-1" @endif>
+                                    <span class="text-accent">{{ $item->source }}</span> {{ $item->title }}
+                                </a>
                             @endforeach
                         </div>
                     @endforeach
@@ -31,16 +35,66 @@
         @endif
     </div>
 
+    {{-- LIVE NEWS: World / News / Local --}}
+    <section class="mb-14" data-tabs>
+        <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <h1 class="flex items-center gap-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
+                <span class="h-8 w-1.5 rounded-full bg-red-500"></span> Live news
+            </h1>
+            <div class="flex items-center gap-2" role="tablist" aria-label="Live news sections">
+                @foreach ($scopeMeta as $key => $meta)
+                    <a href="{{ route('live.scope', $key) }}" role="tab" data-tab="{{ $key }}" aria-selected="{{ $loop->first ? 'true' : 'false' }}"
+                       class="chip rounded-full px-4 py-2 text-sm font-semibold {{ $loop->first ? '!border-accent !text-ink' : '' }}">{{ $meta['label'] }}</a>
+                @endforeach
+                <a href="{{ route('live') }}" class="ml-1 hidden text-sm font-semibold text-accent hover:underline sm:inline">Live desk &rarr;</a>
+            </div>
+        </div>
+
+        @foreach ($scopeMeta as $key => $meta)
+            <div data-tab-panel="{{ $key }}" class="{{ $loop->first ? '' : 'hidden' }}">
+                <div data-live-poll="{{ route('live.feed', ['scope' => $key, 'variant' => 'panel']) }}" data-live-swap="panel">
+                    @include('live._panel', ['items' => $wire[$key] ?? collect()])
+                </div>
+            </div>
+        @endforeach
+    </section>
+
+    {{-- LIVE TV & VIDEO --}}
+    <section class="mb-14">
+        <div class="mb-5 flex items-end justify-between">
+            <h2 class="flex items-center gap-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
+                <span class="h-7 w-1.5 rounded-full bg-red-500"></span> Live TV &amp; video
+            </h2>
+            <a href="{{ route('live.scope', 'videos') }}" class="text-sm font-semibold text-accent hover:underline">All video &rarr;</a>
+        </div>
+        @include('partials.live-tv', ['channels' => array_slice(config('newswire.live_channels'), 0, 4)])
+
+        @if ($videos->isNotEmpty())
+            <div class="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                @foreach ($videos->take(4) as $video)
+                    @include('partials.video-card', ['video' => $video])
+                @endforeach
+            </div>
+        @endif
+    </section>
+
+    {{-- EPIC World's own reporting --}}
     @if ($lead)
+        <div class="mb-6 flex items-end justify-between">
+            <h2 class="flex items-center gap-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
+                <span class="h-7 w-1.5 rounded-full" style="background: linear-gradient(var(--accent), var(--accent-2))"></span> Stories &amp; explainers
+            </h2>
+            <a href="{{ route('latest') }}" class="text-sm font-semibold text-accent hover:underline">All stories &rarr;</a>
+        </div>
+
         <section class="mb-10 grid gap-5 lg:grid-cols-12">
             <div class="reveal lg:col-span-7">
                 @include('partials.story-overlay', ['article' => $lead, 'tall' => true])
             </div>
 
             <aside class="reveal card rounded-3xl p-5 lg:col-span-5">
-                <div class="mb-2 flex items-center justify-between px-3">
-                    <h2 class="text-xs font-bold uppercase tracking-wider text-muted">Top stories</h2>
-                    <a href="{{ route('latest') }}" class="text-xs font-semibold text-accent hover:underline">All &rarr;</a>
+                <div class="mb-2 px-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-muted">Top stories</h3>
                 </div>
                 <div class="divide-y divide-line">
                     @foreach ($topStories as $article)
@@ -51,7 +105,6 @@
         </section>
     @endif
 
-    {{-- Topic chips --}}
     @if (($navCategories ?? collect())->isNotEmpty())
         <nav class="mb-12 flex gap-2 overflow-x-auto pb-1" aria-label="Browse topics">
             @foreach ($navCategories->reject(fn ($c) => $c->slug === 'latest') as $chipCategory)
@@ -101,8 +154,4 @@
             </div>
         </section>
     @endforeach
-
-    @if (! $lead)
-        <p class="rounded-2xl border border-dashed border-line-strong bg-surface p-10 text-center text-muted">No articles have been published yet.</p>
-    @endif
 @endsection

@@ -41,6 +41,18 @@ if (config('discovery.schedule.enabled')) {
 }
 
 /*
+ * Live news wire: refreshes the world / news / local headlines and
+ * videos every few minutes (see config/newswire.php). Items are shown
+ * immediately; there is no AI or approval step for the wire.
+ */
+if (config('newswire.enabled')) {
+    Schedule::command(\App\Console\Commands\FetchNewsWire::class)
+        ->everyFiveMinutes()
+        ->withoutOverlapping(10)
+        ->onFailure(fn () => Log::error('Scheduled newswire fetch reported failure.'));
+}
+
+/*
  * Scheduled editorial job processing: invokes editorial:process
  * (App\Console\Commands\ProcessEditorialJobs), which calls
  * App\Services\Editorial\EditorialJobProcessor to run pending

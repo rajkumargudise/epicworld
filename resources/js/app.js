@@ -61,6 +61,60 @@ document.querySelectorAll('[data-copy-link]').forEach((button) => {
     });
 });
 
+// Home / live-desk tabs
+document.querySelectorAll('[data-tabs]').forEach((root) => {
+    const tabs = root.querySelectorAll('[data-tab]');
+    const panels = root.querySelectorAll('[data-tab-panel]');
+    tabs.forEach((tab) => {
+        tab.addEventListener('click', (e) => {
+            e.preventDefault();
+            tabs.forEach((t) => {
+                const on = t === tab;
+                t.setAttribute('aria-selected', String(on));
+                t.classList.toggle('!border-accent', on);
+                t.classList.toggle('!text-ink', on);
+            });
+            panels.forEach((p) => p.classList.toggle('hidden', p.dataset.tabPanel !== tab.dataset.tab));
+        });
+    });
+});
+
+// Click-to-play embeds (YouTube privacy-enhanced domain)
+document.addEventListener('click', (e) => {
+    const button = e.target.closest('[data-embed-play]');
+    if (!button) return;
+    const holder = button.closest('[data-embed]');
+    if (!holder) return;
+    const frame = document.createElement('iframe');
+    frame.src = holder.dataset.embed;
+    frame.className = 'absolute inset-0 h-full w-full';
+    frame.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+    frame.allowFullscreen = true;
+    frame.referrerPolicy = 'strict-origin-when-cross-origin';
+    frame.title = button.getAttribute('aria-label') || 'Video player';
+    holder.replaceChildren(frame);
+});
+
+// Live auto-refresh: re-fetch fragments every minute while the tab is visible
+const polls = document.querySelectorAll('[data-live-poll]');
+if (polls.length) {
+    const refresh = async () => {
+        if (document.hidden) return;
+        for (const el of polls) {
+            try {
+                const res = await fetch(el.dataset.livePoll, { headers: { Accept: 'text/html' } });
+                if (!res.ok) continue;
+                const html = (await res.text()).trim();
+                if (html && html !== el.dataset.lastHtml) {
+                    el.innerHTML = html;
+                    el.dataset.lastHtml = html;
+                }
+            } catch (e) { /* network hiccup - try again next cycle */ }
+        }
+    };
+    setInterval(refresh, 60000);
+}
+
 // Article reading progress
 const bar = document.getElementById('read-progress');
 if (bar) {
