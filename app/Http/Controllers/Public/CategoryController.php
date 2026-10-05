@@ -44,6 +44,14 @@ class CategoryController extends Controller
             'indexable' => $isFirstPage,
             'showCanonical' => true,
             'robotsContent' => $isFirstPage ? 'index, follow' : 'noindex, follow',
+            'breadcrumbJsonLd' => [
+                '@context' => 'https://schema.org',
+                '@type' => 'BreadcrumbList',
+                'itemListElement' => [
+                    ['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => route('home')],
+                    ['@type' => 'ListItem', 'position' => 2, 'name' => $category->name, 'item' => route('category.show', $category)],
+                ],
+            ],
         ]);
     }
 }

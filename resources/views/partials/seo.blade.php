@@ -36,7 +36,7 @@
     $shareImageIsDefault = empty($ogImage);
 @endphp
 <title>{{ $fullTitle }}</title>
-<meta name="description" content="{{ \Illuminate\Support\Str::limit(strip_tags((string) $seoDescription), 158, '…') }}">
+<meta name="description" content="{{ \Illuminate\Support\Str::limit(trim(preg_replace('/\s+/u', ' ', strip_tags((string) $seoDescription)) ?? ''), 158, '…') }}">
 <meta name="robots" content="{{ $robotsContent }}">
 
 @if ($showCanonical && ! empty($canonicalUrl))

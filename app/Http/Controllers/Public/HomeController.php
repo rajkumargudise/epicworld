@@ -104,7 +104,7 @@ class HomeController extends Controller
             'breaking' => $breaking,
             'categorySections' => $categorySections,
             'seoTitle' => config('app.name', 'EPIC World').' | Live World, India & Local News, Video & Explainers',
-            'seoDescription' => 'The latest news, analysis, and explainers across technology, business, science, and the world.',
+            'seoDescription' => 'Live world, India and local news with live TV and video, plus clear, well-sourced explainers on technology, business, science and more - updated every few minutes.',
             'canonicalUrl' => route('home'),
             'indexable' => true,
             'jsonLd' => $this->websiteJsonLd(),

@@ -17,10 +17,10 @@
         <div class="hero-glow absolute inset-0" aria-hidden="true"></div>
         <div class="relative px-6 py-10 sm:px-12 sm:py-14">
             <nav class="mb-5 flex items-center gap-2 text-sm text-muted" aria-label="Breadcrumb">
-                <a href="{{ route('home') }}" class="hover:text-accent">Home</a>
+                <a href="{{ route('home') }}" class="inline-block py-2.5 hover:text-accent">Home</a>
                 @if ($article->category)
                     <span aria-hidden="true">/</span>
-                    <a href="{{ route('category.show', $article->category) }}" class="rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider text-accent">{{ $article->category->name }}</a>
+                    <a href="{{ route('category.show', $article->category) }}" class="rounded-full bg-accent/15 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-accent">{{ $article->category->name }}</a>
                 @endif
             </nav>
             <h1 class="max-w-4xl text-4xl font-extrabold leading-[1.06] tracking-tight sm:text-6xl">{{ $article->title }}</h1>
