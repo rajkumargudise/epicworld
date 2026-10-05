@@ -3,18 +3,18 @@
 @php($context = 'tag')
 
 @section('content')
-    <h1 class="mb-8 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">#{{ $tag->name }}</h1>
+    <h1 class="mb-8 text-4xl font-extrabold tracking-tight sm:text-5xl"><span class="gradient-text">#</span>{{ $tag->name }}</h1>
 
     @if ($articles->isEmpty())
-        <p class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">No articles are tagged {{ $tag->name }} yet.</p>
+        <p class="rounded-2xl border border-dashed border-line-strong bg-surface p-10 text-center text-muted">No articles are tagged {{ $tag->name }} yet.</p>
     @else
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             @foreach ($articles as $article)
                 @include('partials.article-card', ['article' => $article])
             @endforeach
         </div>
 
-        <div class="mt-10">
+        <div class="mt-12">
             {{ $articles->links() }}
         </div>
     @endif

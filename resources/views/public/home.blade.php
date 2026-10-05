@@ -4,65 +4,81 @@
 
 @section('content')
     @if ($breaking->isNotEmpty())
-        <div class="mb-8 flex items-center gap-3 overflow-x-auto rounded-2xl bg-slate-900 px-4 py-3 text-sm text-white">
-            <span class="shrink-0 rounded-full bg-red-500 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider">Breaking</span>
+        <div class="mb-8 flex items-center gap-3 overflow-x-auto rounded-full border border-line bg-surface px-4 py-2.5 text-sm">
+            <span class="flex shrink-0 items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-red-400">
+                <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500"></span> Breaking
+            </span>
             <div class="flex gap-6">
                 @foreach ($breaking as $item)
-                    <a href="{{ route('article.show', $item) }}" class="shrink-0 whitespace-nowrap text-slate-200 hover:text-white hover:underline">
-                        {{ $item->title }}
-                    </a>
+                    <a href="{{ route('article.show', $item) }}" class="shrink-0 whitespace-nowrap text-ink-soft transition hover:text-accent">{{ $item->title }}</a>
                 @endforeach
             </div>
         </div>
     @endif
 
+    {{-- Hero --}}
+    <section class="relative -mx-4 mb-14 overflow-hidden rounded-3xl border border-line sm:mx-0">
+        <div class="hero-glow absolute inset-0" aria-hidden="true"></div>
+        <div class="relative px-6 py-12 sm:px-12 sm:py-16">
+            <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-line bg-surface/70 px-3 py-1 text-xs font-medium text-ink-soft backdrop-blur">
+                <span class="h-1.5 w-1.5 rounded-full bg-accent"></span> Tech &middot; AI &middot; Business &middot; Science
+            </p>
+            <h1 class="max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
+                Stories that move the world, <span class="gradient-text">made clear.</span>
+            </h1>
+            <p class="mt-5 max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg">
+                Sharp, sourced coverage and explainers on the ideas shaping technology, business and science.
+            </p>
+            <div class="mt-8 flex flex-wrap gap-3">
+                <a href="{{ route('latest') }}" class="btn-primary rounded-full px-6 py-3 text-sm font-semibold">Read the latest</a>
+                <a href="{{ route('search') }}" class="chip rounded-full px-6 py-3 text-sm font-semibold">Search</a>
+            </div>
+        </div>
+    </section>
+
     @if ($featured)
-        <section class="mb-14">
-            <article class="group grid overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm md:grid-cols-2">
-                <a href="{{ route('article.show', $featured) }}" class="block overflow-hidden" tabindex="-1" aria-hidden="true">
+        <section class="mb-16">
+            <article class="card reveal group grid overflow-hidden rounded-3xl md:grid-cols-5">
+                <a href="{{ route('article.show', $featured) }}" class="block overflow-hidden md:col-span-3" tabindex="-1" aria-hidden="true">
                     @if ($featured->featured_image)
                         <img src="{{ $featured->featured_image }}" alt="" class="h-64 w-full object-cover transition duration-700 group-hover:scale-105 md:h-full">
                     @else
-                        <div class="h-64 w-full bg-gradient-to-br from-brand-500 via-brand-600 to-slate-900 md:h-full"></div>
+                        <div class="placeholder-art h-64 w-full md:h-full"></div>
                     @endif
                 </a>
-                <div class="flex flex-col justify-center gap-4 p-6 sm:p-10">
+                <div class="flex flex-col justify-center gap-4 p-6 sm:p-10 md:col-span-2">
                     <div class="flex items-center gap-2">
-                        <span class="rounded-full bg-brand-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-brand-700">Featured</span>
+                        <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white" style="background: linear-gradient(100deg, var(--accent), var(--accent-2))">Featured</span>
                         @if ($featured->category)
-                            <a href="{{ route('category.show', $featured->category) }}" class="text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-brand-600">
-                                {{ $featured->category->name }}
-                            </a>
+                            <a href="{{ route('category.show', $featured->category) }}" class="text-xs font-semibold uppercase tracking-wider text-muted hover:text-accent">{{ $featured->category->name }}</a>
                         @endif
                     </div>
-                    <h1 class="text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl">
-                        <a href="{{ route('article.show', $featured) }}" class="hover:text-brand-700">{{ $featured->title }}</a>
-                    </h1>
+                    <h2 class="text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl">
+                        <a href="{{ route('article.show', $featured) }}" class="transition hover:text-accent">{{ $featured->title }}</a>
+                    </h2>
                     @if ($featured->displayExcerpt())
-                        <p class="text-base leading-relaxed text-slate-600">{{ $featured->displayExcerpt() }}</p>
+                        <p class="leading-relaxed text-ink-soft">{{ $featured->displayExcerpt() }}</p>
                     @endif
-                    <div class="flex items-center gap-2 text-xs text-slate-500">
+                    <div class="flex items-center gap-2 text-xs text-muted">
                         @if ($featured->published_at)
                             <time datetime="{{ $featured->published_at->toIso8601String() }}">{{ $featured->published_at->format('M j, Y') }}</time>
                             <span aria-hidden="true">&middot;</span>
                         @endif
                         <span>{{ $featured->displayReadingTimeMinutes() }} min read</span>
                     </div>
-                    <a href="{{ route('article.show', $featured) }}" class="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-600">
-                        Read story <span aria-hidden="true">&rarr;</span>
-                    </a>
+                    <a href="{{ route('article.show', $featured) }}" class="text-sm font-semibold text-accent hover:underline">Read story &rarr;</a>
                 </div>
             </article>
         </section>
     @endif
 
     @if ($latest->isNotEmpty())
-        <section class="mb-14">
-            <div class="mb-5 flex items-end justify-between">
-                <h2 class="text-2xl font-extrabold tracking-tight text-slate-900">Latest</h2>
-                <a href="{{ route('latest') }}" class="text-sm font-semibold text-brand-600 hover:text-brand-700">View all &rarr;</a>
+        <section class="mb-16">
+            <div class="mb-6 flex items-end justify-between">
+                <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">Latest</h2>
+                <a href="{{ route('latest') }}" class="text-sm font-semibold text-accent hover:underline">View all &rarr;</a>
             </div>
-            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 @foreach ($latest as $article)
                     @include('partials.article-card', ['article' => $article])
                 @endforeach
@@ -73,14 +89,12 @@
     <x-ad-slot name="home_between_sections" :context="$context" />
 
     @foreach ($categorySections as $section)
-        <section class="mb-14">
-            <div class="mb-5 flex items-end justify-between">
-                <h2 class="text-2xl font-extrabold tracking-tight text-slate-900">{{ $section['category']->name }}</h2>
-                <a href="{{ route('category.show', $section['category']) }}" class="text-sm font-semibold text-brand-600 hover:text-brand-700">
-                    View all &rarr;
-                </a>
+        <section class="mb-16">
+            <div class="mb-6 flex items-end justify-between">
+                <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">{{ $section['category']->name }}</h2>
+                <a href="{{ route('category.show', $section['category']) }}" class="text-sm font-semibold text-accent hover:underline">View all &rarr;</a>
             </div>
-            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 @foreach ($section['articles'] as $article)
                     @include('partials.article-card', ['article' => $article])
                 @endforeach
@@ -89,6 +103,6 @@
     @endforeach
 
     @if ($latest->isEmpty() && ! $featured)
-        <p class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">No articles have been published yet.</p>
+        <p class="rounded-2xl border border-dashed border-line-strong bg-surface p-10 text-center text-muted">No articles have been published yet.</p>
     @endif
 @endsection

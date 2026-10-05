@@ -16,9 +16,9 @@
 --}}
 @section('content')
     <article class="mx-auto max-w-2xl">
-        <h1 class="text-2xl font-bold text-slate-900">Privacy</h1>
+        <h1 class="text-4xl font-extrabold tracking-tight text-ink">Privacy</h1>
 
-        <div class="prose prose-slate mt-6 max-w-none">
+        <div class="article-body mt-8">
             <p>
                 <strong>This page is a plain description of what EPIC World does today, not a legal
                 certification.</strong> The wording below will be finalized, and reviewed for the

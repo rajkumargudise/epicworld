@@ -3,34 +3,35 @@
 @php($context = 'category')
 
 @section('content')
-    <header class="mb-8 rounded-3xl bg-gradient-to-br from-brand-600 to-slate-900 px-6 py-10 text-white sm:px-10">
-        <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl">{{ $category->name }}</h1>
-        @if ($category->description)
-            <p class="mt-2 max-w-2xl text-brand-100">{{ $category->description }}</p>
-        @endif
+    <header class="relative mb-10 overflow-hidden rounded-3xl border border-line px-6 py-12 sm:px-10">
+        <div class="hero-glow absolute inset-0" aria-hidden="true"></div>
+        <div class="relative">
+            <p class="text-xs font-semibold uppercase tracking-wider text-accent">Category</p>
+            <h1 class="mt-2 text-4xl font-extrabold tracking-tight sm:text-5xl">{{ $category->name }}</h1>
+            @if ($category->description)
+                <p class="mt-3 max-w-2xl text-ink-soft">{{ $category->description }}</p>
+            @endif
 
-        @if ($topics->isNotEmpty())
-            <div class="mt-5 flex flex-wrap gap-2">
-                @foreach ($topics as $topic)
-                    <a href="{{ route('search', ['q' => $topic->name]) }}"
-                       class="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white transition hover:bg-white/25">
-                        {{ $topic->name }}
-                    </a>
-                @endforeach
-            </div>
-        @endif
+            @if ($topics->isNotEmpty())
+                <div class="mt-6 flex flex-wrap gap-2">
+                    @foreach ($topics as $topic)
+                        <a href="{{ route('search', ['q' => $topic->name]) }}" class="chip rounded-full px-3 py-1 text-xs font-medium">{{ $topic->name }}</a>
+                    @endforeach
+                </div>
+            @endif
+        </div>
     </header>
 
     @if ($articles->isEmpty())
-        <p class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">No articles have been published in this category yet.</p>
+        <p class="rounded-2xl border border-dashed border-line-strong bg-surface p-10 text-center text-muted">No articles have been published in this category yet.</p>
     @else
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             @foreach ($articles as $article)
                 @include('partials.article-card', ['article' => $article])
             @endforeach
         </div>
 
-        <div class="mt-10">
+        <div class="mt-12">
             {{ $articles->links() }}
         </div>
     @endif
