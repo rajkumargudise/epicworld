@@ -58,6 +58,27 @@ class EditorialJobProcessorTest extends TestCase
         $this->assertNotNull($job->article_id);
     }
 
+    public function test_a_rate_limited_provider_leaves_jobs_pending_and_stops_the_batch(): void
+    {
+        [, $first] = $this->pendingJobWithEvidence();
+        [, $second] = $this->pendingJobWithEvidence();
+        app(FakeAiProvider::class)->push(
+            AiResult::failure(AiResultStatus::RateLimited, 'fake', null, 'quota exceeded'),
+        );
+
+        $run = app(EditorialJobProcessor::class)->process();
+
+        $this->assertSame(0, $run->items_failed);
+        $this->assertCount(1, app(FakeAiProvider::class)->calls(), 'the batch must stop after the first unavailable response');
+        foreach ([$first, $second] as $job) {
+            $job->refresh();
+            $this->assertSame(EditorialJobStatus::Pending, $job->status);
+            $this->assertSame(0, $job->attempts);
+            $this->assertSame(StoryStatus::Candidate, $job->story->status);
+        }
+        $this->assertStringContainsString('Waiting', $first->error);
+    }
+
     public function test_one_failing_job_does_not_stop_processing_for_the_others(): void
     {
         [, $badJob] = $this->pendingJobWithEvidence();

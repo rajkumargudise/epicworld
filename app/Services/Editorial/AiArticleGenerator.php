@@ -3,6 +3,7 @@
 namespace App\Services\Editorial;
 
 use App\Enums\AiOperation;
+use App\Enums\AiResultStatus;
 use App\Enums\ArticleStatus;
 use App\Enums\EditorialJobStatus;
 use App\Enums\StoryStatus;
@@ -11,6 +12,7 @@ use App\Models\EditorialJob;
 use App\Models\Story;
 use App\Services\Ai\AiProviderManager;
 use App\Services\Ai\AiRequest;
+use App\Services\Ai\Exceptions\AiProviderUnavailableException;
 use App\Services\Evidence\FactSheet;
 use Illuminate\Support\Str;
 
@@ -99,6 +101,20 @@ class AiArticleGenerator
         );
 
         $result = $this->providers->resolve()->respond($request);
+
+        if (in_array($result->status, [AiResultStatus::RateLimited, AiResultStatus::AuthenticationError, AiResultStatus::Timeout], true)) {
+            // Not this story's fault: put everything back as it was so a
+            // later run (once quota/credentials are fixed) picks it up.
+            $job->update([
+                'status' => EditorialJobStatus::Pending,
+                'attempts' => max(0, $job->attempts - 1),
+                'started_at' => null,
+                'error' => sprintf('Waiting - %s (%s): %s', $result->provider, $result->status->value, $result->error),
+            ]);
+            $story->update(['status' => StoryStatus::Candidate]);
+
+            throw new AiProviderUnavailableException((string) $result->error);
+        }
 
         if (! $result->successful()) {
             return $this->fail(

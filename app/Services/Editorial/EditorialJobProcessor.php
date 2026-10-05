@@ -6,6 +6,7 @@ use App\Enums\AutomationRunStatus;
 use App\Enums\EditorialJobStatus;
 use App\Models\AutomationRun;
 use App\Models\EditorialJob;
+use App\Services\Ai\Exceptions\AiProviderUnavailableException;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -48,6 +49,7 @@ class EditorialJobProcessor
         $completed = 0;
         $failed = 0;
         $skipped = 0;
+        $stoppedReason = null;
 
         try {
             $jobs = EditorialJob::query()
@@ -87,6 +89,15 @@ class EditorialJobProcessor
                         // is "skipped", not "failed".
                         default => $skipped++,
                     };
+                } catch (AiProviderUnavailableException $exception) {
+                    // The provider (not this story) is the problem: the
+                    // generator already returned the job to Pending, so
+                    // stop the batch rather than hammer it - the next
+                    // scheduled run retries.
+                    $skipped++;
+                    $stoppedReason = $exception->getMessage();
+
+                    break;
                 } catch (Throwable $exception) {
                     $failed++;
 
@@ -119,6 +130,7 @@ class EditorialJobProcessor
                 'items_skipped' => $skipped,
                 'metrics' => [
                     'jobs_completed' => $completed,
+                    'stopped_reason' => $stoppedReason,
                 ],
             ]);
         } catch (Throwable $exception) {
