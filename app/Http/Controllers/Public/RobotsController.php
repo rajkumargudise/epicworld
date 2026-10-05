@@ -21,6 +21,11 @@ class RobotsController extends Controller
 {
     public function index(): Response
     {
+        // A staging copy must never be indexed as a duplicate of the real site.
+        if (str_contains((string) parse_url((string) config('app.url'), PHP_URL_HOST), 'staging')) {
+            return response("User-agent: *\nDisallow: /\n")->header('Content-Type', 'text/plain');
+        }
+
         $lines = [
             'User-agent: *',
             'Allow: /',

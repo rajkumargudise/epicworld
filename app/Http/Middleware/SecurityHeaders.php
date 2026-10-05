@@ -39,6 +39,11 @@ class SecurityHeaders
         // never restricts anything the site itself does.
         $response->headers->set('Permissions-Policy', 'geolocation=(), camera=(), microphone=()');
 
+        // A staging address must never end up in search results.
+        if (str_contains((string) parse_url((string) config('app.url'), PHP_URL_HOST), 'staging')) {
+            $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
+        }
+
         return $response;
     }
 }

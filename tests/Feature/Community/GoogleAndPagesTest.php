@@ -144,6 +144,18 @@ class GoogleAndPagesTest extends TestCase
         $this->get('/robots.txt')->assertSee('Sitemap: '.route('sitemap.news'), false)->assertSee('Disallow: /account', false);
     }
 
+    public function test_a_staging_address_blocks_all_search_engines(): void
+    {
+        config(['app.url' => 'https://staging.example.com']);
+
+        $this->get('/robots.txt')->assertSee('Disallow: /', false)->assertDontSee('Allow: /', false)->assertDontSee('Sitemap:', false);
+        $this->get('/')->assertHeader('X-Robots-Tag', 'noindex, nofollow');
+
+        config(['app.url' => 'https://epicworld.in']);
+        $this->get('/robots.txt')->assertSee('Allow: /', false);
+        $this->get('/')->assertHeaderMissing('X-Robots-Tag');
+    }
+
     public function test_the_required_pages_exist_and_are_linked_from_the_footer(): void
     {
         foreach (['/about', '/contact', '/editorial-policy', '/terms', '/write-for-us', '/privacy'] as $url) {
