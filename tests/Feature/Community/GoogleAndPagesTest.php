@@ -152,8 +152,12 @@ class GoogleAndPagesTest extends TestCase
         $this->get('/')->assertHeader('X-Robots-Tag', 'noindex, nofollow');
 
         config(['app.url' => 'https://epicworld.in']);
-        $this->get('/robots.txt')->assertSee('Allow: /', false);
-        $this->get('/')->assertHeaderMissing('X-Robots-Tag');
+        $this->get('https://epicworld.in/robots.txt')->assertSee('Allow: /', false)->assertSee('Sitemap:', false);
+        $this->get('https://epicworld.in/')->assertHeaderMissing('X-Robots-Tag');
+
+        // The staging address stays blocked even though APP_URL is the real domain.
+        $this->get('https://staging.epicworld.in/robots.txt')->assertSee('Disallow: /', false)->assertDontSee('Sitemap:', false);
+        $this->get('https://staging.epicworld.in/')->assertHeader('X-Robots-Tag', 'noindex, nofollow');
     }
 
     public function test_the_required_pages_exist_and_are_linked_from_the_footer(): void

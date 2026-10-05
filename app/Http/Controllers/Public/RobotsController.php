@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
@@ -19,10 +20,11 @@ use Illuminate\Http\Response;
  */
 class RobotsController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        // A staging copy must never be indexed as a duplicate of the real site.
-        if (str_contains((string) parse_url((string) config('app.url'), PHP_URL_HOST), 'staging')) {
+        // A staging address must never be indexed as a duplicate of the real
+        // site - judged by the address being visited as well as APP_URL.
+        if (str_contains($request->getHost(), 'staging') || str_contains((string) parse_url((string) config('app.url'), PHP_URL_HOST), 'staging')) {
             return response("User-agent: *\nDisallow: /\n")->header('Content-Type', 'text/plain');
         }
 

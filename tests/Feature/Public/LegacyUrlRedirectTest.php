@@ -39,6 +39,17 @@ class LegacyUrlRedirectTest extends TestCase
         $this->get('/still-a-draft/')->assertNotFound();
     }
 
+    public function test_old_wordpress_sitemaps_and_feeds_redirect_to_the_new_ones(): void
+    {
+        foreach (['/wp-sitemap.xml', '/sitemap_index.xml', '/post-sitemap.xml', '/wp-sitemap-posts-post-1.xml'] as $old) {
+            $this->get($old)->assertStatus(301)->assertRedirect(route('sitemap'));
+        }
+
+        foreach (['/feed', '/feed/', '/comments/feed'] as $old) {
+            $this->get($old)->assertStatus(301)->assertRedirect(route('latest'));
+        }
+    }
+
     public function test_an_unknown_path_is_a_plain_404(): void
     {
         $this->get('/no-such-thing')->assertNotFound();

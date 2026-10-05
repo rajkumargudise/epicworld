@@ -19,6 +19,17 @@ class LegacyUrlController extends Controller
 {
     public function __invoke(Request $request): Response
     {
+        // Old WordPress sitemap / feed addresses -> their new equivalents.
+        if ($request->isMethod('GET')) {
+            if ($request->is('wp-sitemap*.xml', 'sitemap_index.xml', '*-sitemap*.xml', 'sitemap-index.xml', 'sitemap.xml/*')) {
+                return redirect()->route('sitemap', [], 301);
+            }
+
+            if ($request->is('feed', 'feed/*', 'comments/feed', 'comments/feed/*', 'rss', 'rss.xml')) {
+                return redirect()->route('latest', [], 301);
+            }
+        }
+
         if ($request->isMethod('GET') && ! $request->is('admin/*', 'article/*', 'api/*')) {
             $article = $this->match($request);
 
