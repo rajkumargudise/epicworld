@@ -13,6 +13,7 @@
             <nav class="flex items-center gap-6 text-sm font-medium">
                 <a href="{{ route('admin.dashboard') }}" class="font-semibold">EPIC World</a>
                 <a href="{{ route('admin.dashboard') }}" class="text-slate-600 hover:text-slate-900">Dashboard</a>
+                <a href="{{ route('admin.blog-writer.create') }}" class="text-slate-600 hover:text-slate-900">Write blog</a>
                 <a href="{{ route('admin.review.index') }}" class="text-slate-600 hover:text-slate-900">Review</a>
                 <a href="{{ route('admin.comments.index') }}" class="text-slate-600 hover:text-slate-900">Comments</a>
                 <a href="{{ route('admin.messages.index') }}" class="text-slate-600 hover:text-slate-900">Messages</a>

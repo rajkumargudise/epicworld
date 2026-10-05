@@ -57,6 +57,24 @@
         @endif
     </div>
 
+    {{-- Free image --}}
+    <div class="mb-6 rounded-lg border border-slate-200 bg-white p-4">
+        <div class="flex flex-wrap items-center gap-4">
+            @if ($article->featured_image)
+                <img src="{{ $article->featured_image }}" alt="" referrerpolicy="no-referrer" class="h-20 w-32 rounded-md object-cover">
+                <p class="text-xs text-slate-500">{{ $metadata['image_credit']['text'] ?? 'Image set manually' }}</p>
+            @else
+                <p class="text-sm text-slate-500">No featured image yet.</p>
+            @endif
+            <form method="POST" action="{{ route('admin.articles.image', $article) }}" class="ml-auto flex flex-wrap items-center gap-2">
+                @csrf
+                <input type="text" name="query" placeholder="Search words, e.g. classroom students" class="rounded-md border border-slate-300 px-3 py-1.5 text-sm">
+                <label class="flex items-center gap-1 text-xs text-slate-600"><input type="checkbox" name="replace" value="1" {{ $article->featured_image ? '' : 'disabled' }}> replace current</label>
+                <button class="rounded-md bg-slate-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700">Find a free image</button>
+            </form>
+        </div>
+    </div>
+
     <form method="POST" action="{{ route('admin.articles.update', $article) }}" class="mb-8 space-y-4">
         @csrf
         @method('PUT')

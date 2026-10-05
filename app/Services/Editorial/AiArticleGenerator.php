@@ -44,6 +44,8 @@ class AiArticleGenerator
         'dek' => ['type' => 'string', 'max_length' => 300, 'required' => false],
         'body' => ['type' => 'string'],
         'key_points' => ['type' => 'array', 'required' => false],
+        'tags' => ['type' => 'array', 'required' => false],
+        'image_query' => ['type' => 'string', 'max_length' => 80, 'required' => false],
         'citations' => ['type' => 'array'],
     ];
 
@@ -103,6 +105,7 @@ class AiArticleGenerator
             facts: $factSheet->forAiRequest(),
             instructions: $this->instructions(),
             schema: self::OUTPUT_SCHEMA,
+            allowBackground: true,
         );
 
         $result = $this->providers->resolve()->respond($request);
@@ -144,6 +147,26 @@ class AiArticleGenerator
         }
 
         $article = $this->saveArticle($story, $result->data);
+
+        // A free, credited image - best effort, never blocks the article.
+        try {
+            app(\App\Services\Images\ArticleImageAttacher::class)->attach($article, $result->data['image_query'] ?? null);
+        } catch (\Throwable) {
+            // an article is never held back for want of an image
+        }
+
+        $tagIds = collect((array) ($result->data['tags'] ?? []))
+            ->filter(fn ($t) => is_string($t) && trim($t) !== '')
+            ->map(fn ($t) => Str::limit(trim(strip_tags($t)), 40, ''))
+            ->unique(fn ($t) => Str::slug($t))
+            ->take(5)
+            ->map(fn ($name) => \App\Models\Tag::firstOrCreate(['slug' => Str::slug($name)], ['name' => $name])->id)
+            ->values()
+            ->all();
+
+        if ($tagIds !== []) {
+            $article->tags()->sync($tagIds);
+        }
         // Moves the Article to Review if it passes quality gates, and
         // - as of Milestone 9 - mirrors that onto the Story too. If
         // it doesn't pass, both stay exactly where they are: the
@@ -173,18 +196,21 @@ class AiArticleGenerator
      */
     private function instructions(): string
     {
-        return 'Draft a news article using only the supplied evidence. Do not include any name, '
-            .'number, date, quote, or claim that the evidence does not support. For every factual '
-            .'claim in the body, include the exact supporting text from the evidence in the '
-            .'citations array - a claim with no matching citation will cause the entire draft to '
-            .'be rejected. If the evidence is too thin for a complete article, write only as much '
-            .'as it supports. Write original prose in your own words - never copy sentences from '
-            .'the evidence - so a reader gets the full story without needing the source. '
-            .'Format the body as plain text: an opening paragraph, then sections that each start '
-            .'with a line like "## What happened", "## Background", "## Why it matters", "## What\'s next" '
-            .'(use only sections the evidence supports), separated by blank lines. Use "- " lines for '
-            .'lists and a "> " line only for a quote that appears verbatim in the evidence. Also return '
-            .'key_points: 3 or 4 short, standalone takeaway sentences.';
+        return 'Write a complete, original, publication-quality news article of 600 to 900 words about this story, in your own words. '
+            .'Ground the event itself - who, what, when, where - strictly in the supplied source material: do not include any name, '
+            .'number, date, quote or event-specific claim that it does not support, and for each such claim include the exact '
+            .'supporting text from the source material in the citations array (a citation the material does not contain will cause '
+            .'the whole draft to be rejected). Then turn it into a full article by adding widely known background, definitions and '
+            .'context in general terms - what the terms mean, relevant history, why it matters, who is affected, what typically '
+            .'happens next, what to watch - without inventing any specifics. Never copy sentences from the source material, and do '
+            .'not mention "the source material" in the text. '
+            .'Format the body as plain text: a strong opening paragraph (no heading), then 5 to 7 sections that each start with a line '
+            .'like "## What happened", "## Background", "## Why it matters", "## Who is affected", "## What happens next", ending with '
+            .'"## Bottom line", separated by blank lines. Use "- " lines for lists and a "> " line only for a quote that appears '
+            .'verbatim in the source material. Also return: title (clear, under 65 characters, no clickbait), dek (a 140-160 character '
+            .'summary sentence), key_points (3 or 4 short standalone takeaway sentences), tags (3 to 5 short topic tags) and '
+            .'image_query (2 to 4 plain words describing a generic photograph that could illustrate the story, e.g. "air base runway"; '
+            .'never the name of a person).';
     }
 
     /**

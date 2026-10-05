@@ -95,7 +95,9 @@ class OpenAiProvider implements AiProvider
         return implode("\n\n", [
             "Operation: {$request->operation->value}",
             "Instructions:\n{$request->instructions}",
-            'Evidence (the only facts you may use): '.json_encode($request->facts),
+            $request->allowBackground
+                ? 'Source material (ground every event-specific claim in this; you may add widely known background, definitions and context, but never invent specific figures, quotes, dates, names or events): '.json_encode($request->facts)
+                : 'Evidence (the only facts you may use): '.json_encode($request->facts),
             'Respond with a single JSON object matching this shape (no prose, no markdown fences): '
                 .json_encode(array_keys($request->schema)),
         ]);

@@ -34,6 +34,19 @@ return [
     |
     */
 
+    /*
+    | A draft shorter than this (characters) fails the quality gate and stays
+    | in Draft instead of reaching the review queue - this is what keeps
+    | one-paragraph "briefs" from being offered for publication as articles.
+    */
+    'min_content_length' => (int) env('EDITORIAL_MIN_CONTENT_LENGTH', 2500),
+
+    /*
+    | At most this many AI articles are written per day (Admin > Settings
+    | can override it), so the review queue stays a manageable size.
+    */
+    'daily_article_cap' => (int) env('EDITORIAL_DAILY_ARTICLE_CAP', 24),
+
     'schedule' => [
         'enabled' => (bool) env('EDITORIAL_SCHEDULE_ENABLED', true),
         'frequency_minutes' => (int) env('EDITORIAL_SCHEDULE_FREQUENCY_MINUTES', 10),

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\ArticleController;
 use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\ContributorPostController;
+use App\Http\Controllers\Admin\BlogWriterController;
 use App\Http\Controllers\Admin\CommentModerationController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FeedController;
@@ -114,6 +115,10 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/stories', [StoryController::class, 'index'])->name('stories.index');
         Route::get('/stories/{story}', [StoryController::class, 'show'])->name('stories.show');
+
+        Route::get('/blog-writer', [BlogWriterController::class, 'create'])->name('blog-writer.create');
+        Route::post('/blog-writer', [BlogWriterController::class, 'store'])->name('blog-writer.store');
+        Route::post('/articles/{article}/image', [BlogWriterController::class, 'image'])->name('articles.image');
 
         Route::get('/review', [ReviewQueueController::class, 'index'])->name('review.index');
         Route::post('/review/publish', [ReviewQueueController::class, 'publish'])->name('review.publish');

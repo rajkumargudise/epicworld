@@ -62,6 +62,25 @@
         </fieldset>
 
         <fieldset class="space-y-4 rounded-lg border border-slate-200 bg-white p-5">
+            <legend class="px-1 text-sm font-semibold">Articles &amp; images</legend>
+            <div>
+                <label for="ai_daily_article_cap" class="mb-1 block text-sm font-medium">Most AI articles written per day</label>
+                <input id="ai_daily_article_cap" name="ai_daily_article_cap" type="number" min="0" max="500" value="{{ old('ai_daily_article_cap', $dailyCap) }}"
+                       class="w-40 rounded-md border border-slate-300 px-3 py-2 text-sm">
+                <p class="mt-1 text-xs text-slate-500">Keeps the review queue a manageable size. 0 = no limit.</p>
+            </div>
+            <p class="text-xs text-slate-500">Free images work out of the box (Openverse, credited). For better photos add a free Pexels and/or Unsplash key:</p>
+            <div>
+                <label for="pexels_api_key" class="mb-1 block text-sm font-medium">Pexels API key <span class="{{ $pexelsKeySet ? 'text-emerald-700' : 'text-slate-400' }} text-xs font-normal">{{ $pexelsKeySet ? '(set)' : '(optional)' }}</span></label>
+                <input id="pexels_api_key" name="pexels_api_key" type="password" autocomplete="off" placeholder="{{ $pexelsKeySet ? 'Leave blank to keep the current key' : '' }}" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label for="unsplash_access_key" class="mb-1 block text-sm font-medium">Unsplash access key <span class="{{ $unsplashKeySet ? 'text-emerald-700' : 'text-slate-400' }} text-xs font-normal">{{ $unsplashKeySet ? '(set)' : '(optional)' }}</span></label>
+                <input id="unsplash_access_key" name="unsplash_access_key" type="password" autocomplete="off" placeholder="{{ $unsplashKeySet ? 'Leave blank to keep the current key' : '' }}" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+            </div>
+        </fieldset>
+
+        <fieldset class="space-y-4 rounded-lg border border-slate-200 bg-white p-5">
             <legend class="px-1 text-sm font-semibold">Google &amp; site</legend>
 
             <div>

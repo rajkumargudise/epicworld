@@ -25,6 +25,13 @@ class ArticleQualityEvaluator
     public function evaluate(Article $article): array
     {
         $issues = [];
+        $metadata = $article->editorial_metadata ?? [];
+
+        // Human-written content (a contributor's post, an imported blog post)
+        // has its own length rules and no AI evidence ledger to check; the
+        // human editor's review replaces the "supporting facts" requirement.
+        $humanAuthored = ($metadata['source'] ?? null) === 'contributor' || ($metadata['imported_from'] ?? null) === 'wordpress';
+        $minimum = $humanAuthored ? self::MINIMUM_CONTENT_LENGTH : (int) config('editorial.min_content_length', self::MINIMUM_CONTENT_LENGTH);
 
         if (trim((string) $article->title) === '') {
             $issues[] = 'missing_title';
@@ -32,7 +39,7 @@ class ArticleQualityEvaluator
 
         if (trim((string) $article->content) === '') {
             $issues[] = 'missing_content';
-        } elseif (mb_strlen(trim($article->content)) < self::MINIMUM_CONTENT_LENGTH) {
+        } elseif (mb_strlen(trim($article->content)) < $minimum) {
             $issues[] = 'content_too_short';
         }
 
@@ -40,12 +47,8 @@ class ArticleQualityEvaluator
             $issues[] = 'missing_category';
         }
 
-        // Human-written content (a contributor's post, an imported blog
-        // post) has no AI evidence ledger to check; the human editor's
-        // review replaces the "supporting facts" requirement.
-        $metadata = $article->editorial_metadata ?? [];
-
-        if (($metadata['source'] ?? null) === 'contributor' || ($metadata['imported_from'] ?? null) === 'wordpress') {
+        // Topic blogs written from an editor's brief have no news story either.
+        if ($humanAuthored || ($metadata['source'] ?? null) === 'ai_blog') {
             return ['passed' => $issues === [], 'issues' => $issues];
         }
 

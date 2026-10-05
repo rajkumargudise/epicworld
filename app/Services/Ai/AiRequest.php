@@ -33,5 +33,7 @@ final readonly class AiRequest
         public string $instructions,
         public array $schema,
         public ?string $model = null,
+        /** Long-form mode: event-specific claims must come from the facts, but widely known background, definitions and context may be added. */
+        public bool $allowBackground = false,
     ) {}
 }

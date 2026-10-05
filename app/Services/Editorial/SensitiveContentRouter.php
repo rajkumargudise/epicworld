@@ -67,7 +67,7 @@ class SensitiveContentRouter
     {
         $metadata = $article->editorial_metadata ?? [];
 
-        return ($metadata['source'] ?? null) === 'contributor' || ($metadata['imported_from'] ?? null) === 'wordpress';
+        return in_array($metadata['source'] ?? null, ['contributor', 'ai_blog'], true) || ($metadata['imported_from'] ?? null) === 'wordpress';
     }
 
     public function annotate(Article $article): array

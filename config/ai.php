@@ -52,7 +52,7 @@ return [
             'api_key' => env('GEMINI_API_KEY'),
             'model' => env('GEMINI_MODEL', 'gemini-flash-latest'),
             'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta'),
-            'timeout' => env('GEMINI_TIMEOUT_SECONDS'),
+            'timeout' => env('GEMINI_TIMEOUT_SECONDS', 90),
         ],
 
         'openai' => [
@@ -60,7 +60,7 @@ return [
             'api_key' => env('OPENAI_API_KEY'),
             'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
             'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
-            'timeout' => env('OPENAI_TIMEOUT_SECONDS', 60),
+            'timeout' => env('OPENAI_TIMEOUT_SECONDS', 90),
         ],
 
         'fake' => [

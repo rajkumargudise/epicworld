@@ -25,6 +25,9 @@ class SettingsController extends Controller
             'openaiKeySet' => Setting::read('openai_api_key') !== null || filled(config('ai.providers.openai.api_key')),
             'geminiKeySet' => Setting::read('gemini_api_key') !== null || filled(config('ai.providers.gemini.api_key')),
             'youtubeKeySet' => Setting::read('youtube_api_key') !== null || filled(config('newswire.youtube_api_key')),
+            'pexelsKeySet' => Setting::read('pexels_api_key') !== null,
+            'unsplashKeySet' => Setting::read('unsplash_access_key') !== null,
+            'dailyCap' => Setting::read('ai_daily_article_cap') ?? config('editorial.daily_article_cap'),
             'geminiModel' => Setting::read('gemini_model') ?? config('ai.providers.gemini.model'),
             'ga4' => Setting::read('ga4_measurement_id'),
             'gsc' => Setting::read('gsc_verification'),
@@ -49,6 +52,11 @@ class SettingsController extends Controller
             'youtube_api_key' => ['nullable', 'string', 'max:300'],
             'clear_youtube_api_key' => ['nullable', 'boolean'],
             'gemini_model' => ['nullable', 'string', 'max:100'],
+            'pexels_api_key' => ['nullable', 'string', 'max:200'],
+            'unsplash_access_key' => ['nullable', 'string', 'max:200'],
+            'clear_pexels_api_key' => ['nullable', 'boolean'],
+            'clear_unsplash_access_key' => ['nullable', 'boolean'],
+            'ai_daily_article_cap' => ['nullable', 'integer', 'min:0', 'max:500'],
             'ga4_measurement_id' => ['nullable', 'string', 'regex:/^G-[A-Z0-9]{6,14}$/'],
             'gsc_verification' => ['nullable', 'string', 'max:500'],
             'adsense_publisher_id' => ['nullable', 'string', 'max:60'],
@@ -79,6 +87,16 @@ class SettingsController extends Controller
         }
 
         Setting::write('gemini_model', $data['gemini_model'] ?? null);
+        if ($request->has('ai_daily_article_cap')) {
+            Setting::write('ai_daily_article_cap', isset($data['ai_daily_article_cap']) ? (string) $data['ai_daily_article_cap'] : null);
+        }
+        foreach (['pexels_api_key', 'unsplash_access_key'] as $imageKey) {
+            if ($request->boolean('clear_'.$imageKey)) {
+                Setting::write($imageKey, null);
+            } elseif (filled($data[$imageKey] ?? null)) {
+                Setting::write($imageKey, trim($data[$imageKey]));
+            }
+        }
         Setting::write('ga4_measurement_id', $data['ga4_measurement_id'] ?? null);
         Setting::write('gsc_verification', $gsc ?: null);
         Setting::write('adsense_publisher_id', $adsense ?: null);

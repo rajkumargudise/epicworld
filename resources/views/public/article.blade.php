@@ -4,6 +4,8 @@
     $context = 'article';
     $layout = $article->storyLayout();
     $sources = $article->story?->sources ?? collect();
+    $sourceLinks = collect($article->editorial_metadata['source_links'] ?? []);
+    $imageCredit = $article->editorial_metadata['image_credit'] ?? null;
     $shareUrl = route('article.show', $article);
 @endphp
 
@@ -94,7 +96,18 @@
         {{-- Story body --}}
         <article class="order-1 min-w-0 lg:order-2">
             @if ($article->featured_image)
-                <img src="{{ $article->featured_image }}" alt="{{ $article->title }}" class="mb-8 w-full rounded-3xl border border-line object-cover">
+                <figure class="mb-8">
+                    <img src="{{ $article->featured_image }}" alt="{{ $article->title }}" referrerpolicy="no-referrer" class="w-full rounded-3xl border border-line object-cover">
+                    @if ($imageCredit)
+                        <figcaption class="mt-2 text-xs text-muted">
+                            @if (! empty($imageCredit['url']))
+                                <a href="{{ $imageCredit['url'] }}" target="_blank" rel="nofollow noopener" class="hover:text-accent">{{ $imageCredit['text'] }}</a>
+                            @else
+                                {{ $imageCredit['text'] }}
+                            @endif
+                        </figcaption>
+                    @endif
+                </figure>
             @endif
 
             @if (count($layout['takeaways']))
@@ -173,7 +186,7 @@
                 </div>
             @endif
 
-            @if ($sources->isNotEmpty())
+            @if ($sources->isNotEmpty() || $sourceLinks->isNotEmpty())
                 <section class="story-card mt-8 rounded-3xl p-6 sm:p-8" aria-labelledby="sources-h">
                     <h2 id="sources-h" class="mb-1 text-xs font-bold uppercase tracking-wider text-muted">Sources &amp; credits</h2>
                     <p class="mb-4 text-sm text-muted">This report was written by EPIC World from the reporting below. Original reporting belongs to its publishers.</p>
@@ -186,6 +199,13 @@
                                     <span class="font-semibold">{{ $source->name }}</span>
                                 @endif
                             </li>
+                        @endforeach
+                        @foreach ($sourceLinks as $link)
+                            @if (! empty($link['url']) && preg_match('#^https?://#i', $link['url']))
+                                <li class="rounded-xl border border-line bg-surface-2 px-4 py-3 text-sm">
+                                    <a href="{{ $link['url'] }}" rel="nofollow noopener" target="_blank" class="font-semibold text-ink hover:text-accent">{{ $link['name'] ?? 'Source' }} <span aria-hidden="true">&#8599;</span></a>
+                                </li>
+                            @endif
                         @endforeach
                     </ul>
                 </section>

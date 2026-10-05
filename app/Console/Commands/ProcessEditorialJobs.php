@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Models\EditorialJob;
+use App\Models\Setting;
 use App\Services\Ai\AiProviderManager;
 use App\Services\Editorial\EditorialJobProcessor;
 use Illuminate\Console\Command;
@@ -40,6 +42,21 @@ class ProcessEditorialJobs extends Command
             $this->warn('The selected AI provider has no API key yet; leaving the queue untouched.');
 
             return self::SUCCESS;
+        }
+
+        // Keep the review queue a manageable size: at most N AI articles a day.
+        $cap = (int) (Setting::read('ai_daily_article_cap') ?? config('editorial.daily_article_cap', 24));
+
+        if ($cap > 0) {
+            $doneToday = EditorialJob::query()->where('status', 'completed')->where('completed_at', '>=', now()->startOfDay())->count();
+
+            if ($doneToday >= $cap) {
+                $this->warn("Daily AI article cap reached ({$doneToday}/{$cap}); leaving the queue until tomorrow.");
+
+                return self::SUCCESS;
+            }
+
+            $limit = min($limit, $cap - $doneToday);
         }
 
         $lock = Cache::lock(self::LOCK_KEY, (int) config('editorial.schedule.lock_seconds', 1800));
