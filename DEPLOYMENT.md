@@ -376,3 +376,28 @@ confirmed live on the real domain.
    roll forward with a fix instead of back.
 6. **Smoke test.** Re-run the section 3.12 checklist against the
    rolled-back deployment before considering the rollback complete.
+
+---
+
+## 7. Production layout on Hostinger (epicworld.in) and rollback
+
+As of the 5 Oct 2026 cutover, `epicworld.in` is served by this Laravel app:
+
+```
+~/domains/epicworld.in/
+  epicworld/            the Laravel project (never web-accessible)
+  public_html/          the web root: index.php + .htaccess (front controller pointing at ../epicworld),
+                        build/ and storage/ symlinks into the project, wp-content/uploads (kept: existing
+                        post images), plus the other sites that live here (game/, boondhi/, staging -> project/public)
+  wp-backup-<timestamp>/  the old WordPress files, moved aside (not deleted)
+~/backups/              database dumps (staging DB + the WordPress DB taken at cutover)
+```
+
+* `deploy/cutover.sh` is the script that performed the swap; `deploy/rollback.sh` restores WordPress exactly
+  as it was (also saved on the server as `~/rollback-epicworld-cutover.sh`). Rolling back does not touch the
+  Laravel database, and the WordPress database was never modified.
+* `public_html/.htaccess` additionally redirects `www.epicworld.in` to `epicworld.in`.
+* An unused stray `live/` theme folder inside `public_html` was moved into `wp-backup-*/extras/` because it
+  shadowed the `/live` Live desk route.
+* The scheduler cron (`php artisan schedule:run`, every minute) drives discovery, AI writing and the live wire.
+* `staging.epicworld.in` still points at the same app but is blocked from search engines (robots + X-Robots-Tag).
