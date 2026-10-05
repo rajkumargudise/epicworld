@@ -9,7 +9,7 @@
     </a>
     <div class="flex flex-1 flex-col gap-2 p-5">
         @if ($article->category)
-            <a href="{{ route('category.show', $article->category) }}" class="text-xs font-semibold uppercase tracking-wider text-accent hover:underline">
+            <a href="{{ route('category.show', $article->category) }}" class="relative z-10 -my-2 inline-block py-2 text-xs font-semibold uppercase tracking-wider text-accent hover:underline">
                 {{ $article->category->name }}
             </a>
         @endif

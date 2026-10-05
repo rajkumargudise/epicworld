@@ -44,7 +44,7 @@
             <div class="flex items-center gap-2" role="tablist" aria-label="Live news sections">
                 @foreach ($scopeMeta as $key => $meta)
                     <a href="{{ route('live.scope', $key) }}" role="tab" data-tab="{{ $key }}" aria-selected="{{ $loop->first ? 'true' : 'false' }}"
-                       class="chip rounded-full px-4 py-2 text-sm font-semibold {{ $loop->first ? '!border-accent !text-ink' : '' }}">{{ $meta['label'] }}</a>
+                       class="chip rounded-full px-4 py-3 text-sm font-semibold {{ $loop->first ? '!border-accent !text-ink' : '' }}">{{ $meta['label'] }}</a>
                 @endforeach
                 <a href="{{ route('live') }}" class="ml-1 hidden text-sm font-semibold text-accent hover:underline sm:inline">Live desk &rarr;</a>
             </div>
@@ -65,7 +65,7 @@
             <h2 class="flex items-center gap-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
                 <span class="h-7 w-1.5 rounded-full bg-red-500"></span> Live TV &amp; video
             </h2>
-            <a href="{{ route('live.scope', 'videos') }}" class="text-sm font-semibold text-accent hover:underline">All video &rarr;</a>
+            <a href="{{ route('live.scope', 'videos') }}" class="inline-flex min-h-[44px] items-center text-sm font-semibold text-accent hover:underline">All video &rarr;</a>
         </div>
         @include('partials.live-tv', ['channels' => array_slice(config('newswire.live_channels'), 0, 4)])
 
@@ -84,7 +84,7 @@
             <h2 class="flex items-center gap-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
                 <span class="h-7 w-1.5 rounded-full" style="background: linear-gradient(var(--accent), var(--accent-2))"></span> Stories &amp; explainers
             </h2>
-            <a href="{{ route('latest') }}" class="text-sm font-semibold text-accent hover:underline">All stories &rarr;</a>
+            <a href="{{ route('latest') }}" class="inline-flex min-h-[44px] items-center text-sm font-semibold text-accent hover:underline">All stories &rarr;</a>
         </div>
 
         <section class="mb-10 grid gap-5 lg:grid-cols-12">
@@ -108,7 +108,7 @@
     @if (($navCategories ?? collect())->isNotEmpty())
         <nav class="mb-12 flex gap-2 overflow-x-auto pb-1" aria-label="Browse topics">
             @foreach ($navCategories->reject(fn ($c) => $c->slug === 'latest') as $chipCategory)
-                <a href="{{ route('category.show', $chipCategory) }}" class="chip shrink-0 rounded-full px-4 py-2 text-sm font-medium">{{ $chipCategory->name }}</a>
+                <a href="{{ route('category.show', $chipCategory) }}" class="chip shrink-0 rounded-full px-4 py-3 text-sm font-medium">{{ $chipCategory->name }}</a>
             @endforeach
         </nav>
     @endif
@@ -117,7 +117,7 @@
         <section class="mb-16">
             <div class="mb-6 flex items-end justify-between">
                 <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">Fresh from the newsroom</h2>
-                <a href="{{ route('latest') }}" class="text-sm font-semibold text-accent hover:underline">View all &rarr;</a>
+                <a href="{{ route('latest') }}" class="inline-flex min-h-[44px] items-center text-sm font-semibold text-accent hover:underline">View all &rarr;</a>
             </div>
             <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 @foreach ($moreLatest as $article)
@@ -138,7 +138,7 @@
                     <span class="h-7 w-1.5 rounded-full" style="background: linear-gradient(var(--accent), var(--accent-2))"></span>
                     {{ $section['category']->name }}
                 </h2>
-                <a href="{{ route('category.show', $section['category']) }}" class="text-sm font-semibold text-accent hover:underline">View all &rarr;</a>
+                <a href="{{ route('category.show', $section['category']) }}" class="inline-flex min-h-[44px] items-center text-sm font-semibold text-accent hover:underline">View all &rarr;</a>
             </div>
             <div class="grid gap-5 lg:grid-cols-12">
                 <div class="reveal lg:col-span-7">

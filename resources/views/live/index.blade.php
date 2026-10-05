@@ -20,9 +20,9 @@
             </h1>
             <p class="mt-3 max-w-2xl text-ink-soft">{{ $mode === 'hub' ? 'World, India and local headlines plus live TV and video, refreshed every few minutes.' : $meta['blurb'] }}</p>
             <nav class="mt-6 flex flex-wrap gap-2" aria-label="Live desk sections">
-                <a href="{{ route('live') }}" class="chip rounded-full px-4 py-2 text-sm font-semibold {{ $mode === 'hub' ? '!border-accent !text-ink' : '' }}">All</a>
+                <a href="{{ route('live') }}" class="chip rounded-full px-4 py-3 text-sm font-semibold {{ $mode === 'hub' ? '!border-accent !text-ink' : '' }}">All</a>
                 @foreach ($tabs as [$key, $label])
-                    <a href="{{ route('live.scope', $key) }}" class="chip rounded-full px-4 py-2 text-sm font-semibold {{ $active === $key ? '!border-accent !text-ink' : '' }}">{{ $label }}</a>
+                    <a href="{{ route('live.scope', $key) }}" class="chip rounded-full px-4 py-3 text-sm font-semibold {{ $active === $key ? '!border-accent !text-ink' : '' }}">{{ $label }}</a>
                 @endforeach
             </nav>
         </div>
