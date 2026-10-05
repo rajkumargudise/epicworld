@@ -27,8 +27,11 @@ class RobotsController extends Controller
             'Disallow: /admin',
             'Disallow: /login',
             'Disallow: /search',
+            'Disallow: /account',
+            'Disallow: /register',
             '',
             'Sitemap: '.route('sitemap'),
+            'Sitemap: '.route('sitemap.news'),
         ];
 
         return response(implode("\n", $lines)."\n")

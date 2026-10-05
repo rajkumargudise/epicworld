@@ -9,6 +9,7 @@
         try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
     </script>
     @include('partials.seo')
+    @include('partials.tracking')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
 </head>
@@ -40,6 +41,11 @@
                     <input id="nav-search-q" type="search" name="q" value="{{ request()->query('q') }}" placeholder="Search&hellip;"
                            class="w-36 rounded-full border border-line bg-surface px-4 py-1.5 text-sm text-ink outline-none transition-all placeholder:text-muted focus:w-56 focus:border-accent">
                 </form>
+                @auth
+                    <a href="{{ auth()->user()->isEditor() ? route('admin.dashboard') : route('account.dashboard') }}" class="chip hidden rounded-full px-4 py-1.5 text-sm font-semibold sm:inline-flex">{{ auth()->user()->isEditor() ? 'Dashboard' : 'My posts' }}</a>
+                @else
+                    <a href="{{ route('login') }}" class="chip hidden rounded-full px-4 py-1.5 text-sm font-semibold sm:inline-flex">Log in</a>
+                @endauth
                 <button type="button" data-theme-toggle class="grid h-9 w-9 place-items-center rounded-full border border-line bg-surface text-ink-soft transition hover:text-ink" aria-label="Toggle light or dark theme">
                     <svg class="hidden h-[18px] w-[18px] [[data-theme=dark]_&]:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
                     <svg class="block h-[18px] w-[18px] [[data-theme=dark]_&]:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
@@ -64,6 +70,12 @@
                 <a href="{{ route('live.scope', 'local') }}" class="rounded-lg px-3 py-2 hover:bg-surface-2">Local</a>
                 <a href="{{ route('live.scope', 'videos') }}" class="rounded-lg px-3 py-2 hover:bg-surface-2">Videos</a>
                 <a href="{{ route('latest') }}" class="rounded-lg px-3 py-2 hover:bg-surface-2">Stories</a>
+                <a href="{{ route('write') }}" class="rounded-lg px-3 py-2 hover:bg-surface-2">Write for us</a>
+                @auth
+                    <a href="{{ auth()->user()->isEditor() ? route('admin.dashboard') : route('account.dashboard') }}" class="rounded-lg px-3 py-2 font-semibold text-accent hover:bg-surface-2">{{ auth()->user()->isEditor() ? 'Dashboard' : 'My posts' }}</a>
+                @else
+                    <a href="{{ route('login') }}" class="rounded-lg px-3 py-2 font-semibold text-accent hover:bg-surface-2">Log in</a>
+                @endauth
                 @foreach (($navCategories ?? collect())->reject(fn ($c) => $c->slug === 'latest') as $navCategory)
                     <a href="{{ route('category.show', $navCategory) }}" class="rounded-lg px-3 py-2 hover:bg-surface-2">{{ $navCategory->name }}</a>
                 @endforeach
@@ -110,14 +122,22 @@
                     </div>
                 @endif
             </div>
-            <p class="mt-10 border-t border-line pt-6 text-xs text-muted">
-                &copy; {{ now()->year }} EPIC World. All rights reserved.
-                <span aria-hidden="true">&middot;</span>
+            <div class="mt-10 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-6 text-xs text-muted">
+                <span>&copy; {{ now()->year }} EPIC World. All rights reserved.</span>
+                <a href="{{ route('about') }}" class="hover:text-accent">About</a>
+                <a href="{{ route('contact') }}" class="hover:text-accent">Contact</a>
+                <a href="{{ route('editorial.policy') }}" class="hover:text-accent">Editorial policy</a>
+                <a href="{{ route('write') }}" class="hover:text-accent">Write for us</a>
+                <a href="{{ route('terms') }}" class="hover:text-accent">Terms</a>
                 <a href="{{ route('privacy') }}" class="hover:text-accent">Privacy</a>
-                <span aria-hidden="true">&middot;</span>
                 <a href="{{ route('sitemap') }}" class="hover:text-accent">Sitemap</a>
-            </p>
+                @if ($site->needsConsent())
+                    <a href="#" data-consent-reset class="hover:text-accent">Cookie settings</a>
+                @endif
+            </div>
         </div>
     </footer>
+
+    @include('partials.consent-banner')
 </body>
 </html>

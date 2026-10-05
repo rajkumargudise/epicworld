@@ -1,3 +1,58 @@
+// Consent-gated Google scripts (GA4 / AdSense). Nothing from Google loads
+// until the visitor accepts; "Essential only" loads nothing.
+const consentMeta = document.querySelector('meta[name="epic-consent"]');
+if (consentMeta) {
+    const banner = document.getElementById('consent-banner');
+    const read = () => { try { return localStorage.getItem('consent'); } catch (e) { return null; } };
+    const write = (v) => { try { localStorage.setItem('consent', v); } catch (e) { /* storage unavailable */ } };
+
+    const loadScript = (src, attrs = {}) => {
+        const s = document.createElement('script');
+        s.async = true;
+        s.src = src;
+        Object.entries(attrs).forEach(([k, v]) => s.setAttribute(k, v));
+        document.head.appendChild(s);
+    };
+
+    const activate = () => {
+        const ga = document.querySelector('meta[name="epic-ga4"]')?.content;
+        if (ga && /^G-[A-Z0-9]{6,14}$/.test(ga)) {
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', ga, { anonymize_ip: true });
+            loadScript('https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(ga));
+        }
+        const ads = document.querySelector('meta[name="epic-adsense"]')?.content;
+        if (ads && /^ca-pub-\d{10,20}$/.test(ads)) {
+            loadScript('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(ads), { crossorigin: 'anonymous' });
+        }
+    };
+
+    const choice = read();
+    if (choice === 'granted') {
+        activate();
+    } else if (choice === null && banner) {
+        banner.classList.remove('hidden');
+    }
+
+    document.querySelectorAll('[data-consent]').forEach((button) => {
+        button.addEventListener('click', () => {
+            write(button.dataset.consent);
+            banner?.classList.add('hidden');
+            if (button.dataset.consent === 'granted') activate();
+        });
+    });
+
+    document.querySelectorAll('[data-consent-reset]').forEach((link) => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            try { localStorage.removeItem('consent'); } catch (err) { /* ignore */ }
+            banner?.classList.remove('hidden');
+        });
+    });
+}
+
 // Mobile menu
 const toggle = document.getElementById('menu-toggle');
 const menu = document.getElementById('mobile-menu');

@@ -295,7 +295,7 @@ class StoryRenderer
         $html = preg_replace('/(?<![*\w])\*(?!\s)(.+?)(?<!\s)\*(?![*\w])/s', '<em>$1</em>', $html) ?? $html;
         $html = preg_replace_callback(
             '/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/',
-            fn ($m) => '<a href="'.$m[2].'" rel="nofollow noopener" target="_blank">'.$m[1].'</a>',
+            fn ($m) => '<a href="'.$m[2].'" rel="nofollow ugc noopener" target="_blank">'.$m[1].'</a>',
             $html,
         ) ?? $html;
 

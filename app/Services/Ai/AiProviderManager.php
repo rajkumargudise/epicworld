@@ -36,7 +36,7 @@ class AiProviderManager
         return match ($config['driver'] ?? $driver) {
             'gemini' => new GeminiProvider([
                 'api_key' => Setting::read('gemini_api_key') ?? $config['api_key'] ?? null,
-                'model' => $config['model'] ?? 'gemini-2.0-flash',
+                'model' => Setting::read('gemini_model') ?? $config['model'] ?? 'gemini-flash-latest',
                 'base_url' => $config['base_url'] ?? 'https://generativelanguage.googleapis.com/v1beta',
                 'timeout' => $config['timeout'] ?? config('ai.timeout', 30),
             ]),

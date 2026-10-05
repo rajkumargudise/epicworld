@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use App\Models\Category;
 use App\Models\Tag;
+use App\Models\User;
+use App\Support\SiteSettings;
+use Illuminate\Support\Facades\Gate;
 use App\Services\Ai\Providers\FakeAiProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -25,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
         // test's own app(FakeAiProvider::class) calls (to push
         // canned results or inspect calls()) share the same instance.
         $this->app->singleton(FakeAiProvider::class);
+        $this->app->singleton(SiteSettings::class);
     }
 
     /**
@@ -55,6 +59,10 @@ class AppServiceProvider extends ServiceProvider
             $view->with('popularTags', $this->popularTags());
         });
 
+        // Shared with every view (child views render before the layout,
+        // so a layout-only composer wouldn't reach them).
+        View::share('site', app(SiteSettings::class));
+
         // Milestone 17: the login form had no rate limiting at all -
         // Auth::attempt() was reachable an unlimited number of times.
         // Keyed by email+IP (Laravel's own established convention, the
@@ -64,6 +72,27 @@ class AppServiceProvider extends ServiceProvider
         // cache-backed RateLimiter/ThrottleRequests - no new
         // dependency, and the database cache store already configured
         // for this project makes it Hostinger-safe without Redis.
+        // Only editors and admins may enter the CMS; contributors and
+        // readers who register publicly never can.
+        Gate::define('access-admin', fn (User $user) => $user->isEditor() && ! $user->isSuspended());
+
+        RateLimiter::for('register', fn (Request $request) => [
+            Limit::perMinute(3)->by($request->ip()),
+            Limit::perDay(10)->by($request->ip()),
+        ]);
+
+        RateLimiter::for('comment', fn (Request $request) => [
+            Limit::perMinute(3)->by($request->ip()),
+            Limit::perDay(20)->by($request->ip()),
+        ]);
+
+        RateLimiter::for('contact', fn (Request $request) => [
+            Limit::perMinute(2)->by($request->ip()),
+            Limit::perDay(8)->by($request->ip()),
+        ]);
+
+        RateLimiter::for('submit-post', fn (Request $request) => Limit::perHour(10)->by($request->user()?->id ?: $request->ip()));
+
         RateLimiter::for('login', function (Request $request) {
             $key = Str::lower((string) $request->input('email')).'|'.$request->ip();
 

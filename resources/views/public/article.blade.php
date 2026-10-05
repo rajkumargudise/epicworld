@@ -28,6 +28,9 @@
             <div class="mt-7 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
                 @if ($article->author)
                     <span class="font-semibold text-ink">{{ $article->author->name }}</span>
+                    @if ($article->isContributed())
+                        <span class="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-accent">Community contributor</span>
+                    @endif
                     <span aria-hidden="true">&middot;</span>
                 @endif
                 @if ($article->published_at)
@@ -187,6 +190,8 @@
                     </ul>
                 </section>
             @endif
+
+            @include('partials.comments')
         </article>
     </div>
 

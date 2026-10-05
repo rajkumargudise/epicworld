@@ -25,6 +25,13 @@ class SettingsController extends Controller
             'openaiKeySet' => Setting::read('openai_api_key') !== null || filled(config('ai.providers.openai.api_key')),
             'geminiKeySet' => Setting::read('gemini_api_key') !== null || filled(config('ai.providers.gemini.api_key')),
             'youtubeKeySet' => Setting::read('youtube_api_key') !== null || filled(config('newswire.youtube_api_key')),
+            'geminiModel' => Setting::read('gemini_model') ?? config('ai.providers.gemini.model'),
+            'ga4' => Setting::read('ga4_measurement_id'),
+            'gsc' => Setting::read('gsc_verification'),
+            'adsensePublisher' => Setting::read('adsense_publisher_id'),
+            'adsenseEnabled' => Setting::read('adsense_enabled') === '1',
+            'commentsEnabled' => Setting::read('comments_enabled') !== '0',
+            'contactEmail' => Setting::read('contact_email'),
         ]);
     }
 
@@ -41,7 +48,49 @@ class SettingsController extends Controller
             'clear_gemini_api_key' => ['nullable', 'boolean'],
             'youtube_api_key' => ['nullable', 'string', 'max:300'],
             'clear_youtube_api_key' => ['nullable', 'boolean'],
+            'gemini_model' => ['nullable', 'string', 'max:100'],
+            'ga4_measurement_id' => ['nullable', 'string', 'regex:/^G-[A-Z0-9]{6,14}$/'],
+            'gsc_verification' => ['nullable', 'string', 'max:500'],
+            'adsense_publisher_id' => ['nullable', 'string', 'max:60'],
+            'adsense_enabled' => ['nullable', 'boolean'],
+            'comments_enabled' => ['nullable', 'boolean'],
+            'contact_email' => ['nullable', 'email', 'max:150'],
+        ], [
+            'ga4_measurement_id.regex' => 'Google Analytics IDs look like G-ABC123DEF4.',
         ]);
+
+        // Search Console: accept either the bare token or the whole pasted <meta> tag.
+        $gsc = trim((string) ($data['gsc_verification'] ?? ''));
+        if (preg_match('/content=(?:"([^"]+)"|\'([^\']+)\')/', $gsc, $m)) {
+            $m[1] = $m[1] !== '' ? $m[1] : ($m[2] ?? '');
+            $gsc = $m[1];
+        }
+        if ($gsc !== '' && ! preg_match('/^[A-Za-z0-9_\-]{20,100}$/', $gsc)) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['gsc_verification' => 'That does not look like a Search Console verification token.']);
+        }
+
+        // AdSense: accept "ca-pub-123..." or "pub-123..." or just the digits.
+        $adsense = trim((string) ($data['adsense_publisher_id'] ?? ''));
+        if ($adsense !== '') {
+            $adsense = 'ca-pub-'.preg_replace('/^(ca-)?(pub-)?/i', '', $adsense);
+            if (! preg_match('/^ca-pub-\d{10,20}$/', $adsense)) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['adsense_publisher_id' => 'AdSense publisher IDs look like ca-pub-1234567890123456.']);
+            }
+        }
+
+        Setting::write('gemini_model', $data['gemini_model'] ?? null);
+        Setting::write('ga4_measurement_id', $data['ga4_measurement_id'] ?? null);
+        Setting::write('gsc_verification', $gsc ?: null);
+        Setting::write('adsense_publisher_id', $adsense ?: null);
+        Setting::write('contact_email', $data['contact_email'] ?? null);
+
+        // Toggles are only touched when the form actually sent them.
+        if ($request->has('adsense_enabled')) {
+            Setting::write('adsense_enabled', $request->boolean('adsense_enabled') ? '1' : '0');
+        }
+        if ($request->has('comments_enabled')) {
+            Setting::write('comments_enabled', $request->boolean('comments_enabled') ? '1' : '0');
+        }
 
         Setting::write('ai_provider', $data['ai_provider']);
         Setting::write('openai_model', $data['openai_model'] ?? null);

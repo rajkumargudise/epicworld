@@ -82,6 +82,11 @@ class AiArticleGenerator
         ]);
         $story->update(['status' => StoryStatus::Processing]);
 
+        // Give the story its topic (and so its category) from the source's
+        // default topic before drafting, so the article lands in a category.
+        app(StoryClassifier::class)->classify($story);
+        $story->refresh();
+
         // Re-extract so the evidence ledger reflects every source
         // observation on record right now, not whatever it was when
         // the job was created.
@@ -102,7 +107,12 @@ class AiArticleGenerator
 
         $result = $this->providers->resolve()->respond($request);
 
-        if (in_array($result->status, [AiResultStatus::RateLimited, AiResultStatus::AuthenticationError, AiResultStatus::Timeout], true)) {
+        // A retired/unknown model (HTTP 404) or a provider outage (HTTP 5xx)
+        // is also the provider's problem, not this story's.
+        $providerDown = $result->status === AiResultStatus::ProviderError
+            && preg_match('/HTTP (404|5\d\d)\b/', (string) $result->error) === 1;
+
+        if ($providerDown || in_array($result->status, [AiResultStatus::RateLimited, AiResultStatus::AuthenticationError, AiResultStatus::Timeout], true)) {
             // Not this story's fault: put everything back as it was so a
             // later run (once quota/credentials are fixed) picks it up.
             $job->update([

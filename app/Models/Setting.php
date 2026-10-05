@@ -34,10 +34,12 @@ class Setting extends Model
     {
         if ($value === null || $value === '') {
             static::query()->where('key', $key)->delete();
-
-            return;
+        } else {
+            static::query()->updateOrCreate(['key' => $key], ['value' => Crypt::encryptString($value)]);
         }
 
-        static::query()->updateOrCreate(['key' => $key], ['value' => Crypt::encryptString($value)]);
+        if (app()->bound(\App\Support\SiteSettings::class)) {
+            app(\App\Support\SiteSettings::class)->flush();
+        }
     }
 }

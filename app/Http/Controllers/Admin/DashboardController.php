@@ -6,6 +6,16 @@ use App\Enums\ArticleStatus;
 use App\Enums\StoryStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Article;
+use App\Models\Comment;
+use App\Models\ContactMessage;
+use App\Models\EditorialJob;
+use App\Models\SourceFeed;
+use App\Models\User;
+use App\Models\WireItem;
+use App\Services\Ai\AiProviderManager;
+use App\Services\NewsWire\NewsWireFetcher;
+use App\Support\SiteSettings;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Story;
 use Illuminate\View\View;
 
@@ -18,11 +28,25 @@ use Illuminate\View\View;
  */
 class DashboardController extends Controller
 {
-    public function index(): View
+    public function index(SiteSettings $site, AiProviderManager $ai): View
     {
         $this->authorize('viewAny', Story::class);
 
+        $checks = collect(LaunchController::checks($site, $ai))->flatten(1);
+        $lastWire = Cache::get(NewsWireFetcher::LAST_RUN_KEY);
+
         return view('admin.dashboard', [
+            'pendingComments' => Comment::query()->where('status', Comment::PENDING)->count(),
+            'contributorReview' => Article::query()->where('status', ArticleStatus::Review)->get()->filter(fn (Article $a) => $a->isContributed())->count(),
+            'unreadMessages' => ContactMessage::query()->whereNull('read_at')->count(),
+            'wireItems' => WireItem::query()->count(),
+            'wireLastRun' => $lastWire ? \Carbon\Carbon::createFromTimestamp($lastWire) : null,
+            'failingFeeds' => SourceFeed::query()->whereNotNull('last_failure_at')->whereColumn('last_failure_at', '>', 'last_success_at')->count(),
+            'pendingJobs' => EditorialJob::query()->where('status', 'pending')->count(),
+            'aiReady' => $ai->isReady(),
+            'userCount' => User::query()->count(),
+            'contributorCount' => User::query()->where('role', User::ROLE_CONTRIBUTOR)->count(),
+            'readiness' => ['pass' => $checks->where('status', 'pass')->count(), 'total' => $checks->count()],
             'candidateStories' => Story::query()->where('status', StoryStatus::Candidate)->count(),
             'processingStories' => Story::query()->where('status', StoryStatus::Processing)->count(),
             'reviewStories' => Story::query()->where('status', StoryStatus::Review)->count(),

@@ -31,7 +31,7 @@ class GeminiProviderTest extends TestCase
     public function test_missing_api_key_fails_without_making_a_request(): void
     {
         Http::fake();
-        $provider = new GeminiProvider(['api_key' => null, 'model' => 'gemini-2.0-flash', 'base_url' => 'https://generativelanguage.googleapis.com/v1beta', 'timeout' => 30]);
+        $provider = new GeminiProvider(['api_key' => null, 'model' => 'gemini-flash-latest', 'base_url' => 'https://generativelanguage.googleapis.com/v1beta', 'timeout' => 30]);
 
         $result = $provider->respond($this->request());
 
@@ -152,7 +152,7 @@ class GeminiProviderTest extends TestCase
     {
         return new GeminiProvider([
             'api_key' => 'super-secret-key',
-            'model' => 'gemini-2.0-flash',
+            'model' => 'gemini-flash-latest',
             'base_url' => 'https://generativelanguage.googleapis.com/v1beta',
             'timeout' => 5,
         ]);

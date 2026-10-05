@@ -21,6 +21,8 @@ class User extends Authenticatable
 
     public const ROLE_ADMIN = 'admin';
 
+    public const ROLE_CONTRIBUTOR = 'contributor';
+
     /**
      * Get the attributes that should be cast.
      *
@@ -30,6 +32,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'suspended_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -51,5 +54,24 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;
+    }
+
+    /**
+     * A registered community member who may submit posts for
+     * moderation. Has no access to the CMS.
+     */
+    public function isContributor(): bool
+    {
+        return $this->role === self::ROLE_CONTRIBUTOR;
+    }
+
+    public function articles(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Article::class, 'author_id');
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->suspended_at !== null;
     }
 }

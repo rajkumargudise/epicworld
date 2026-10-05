@@ -31,6 +31,8 @@ class ArticleController extends Controller
 
         return view('public.article', [
             'article' => $article,
+            'comments' => $article->comments()->approved()->orderBy('approved_at')->get(),
+            'commentToken' => \Illuminate\Support\Facades\Crypt::encryptString((string) now()->timestamp),
             'relatedArticles' => $article->relatedArticles(),
             'seoTitle' => $article->seo_title ?: $article->title,
             'seoDescription' => $article->seo_description ?: $article->displayExcerpt(),

@@ -37,9 +37,21 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
+        if (Auth::user()->isSuspended()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'email' => 'This account has been suspended. Please contact us if you think this is a mistake.',
+            ]);
+        }
+
         $request->session()->regenerate();
 
-        return redirect()->intended(route('admin.dashboard'));
+        $home = Auth::user()->isEditor() ? route('admin.dashboard') : route('account.dashboard');
+
+        return redirect()->intended($home);
     }
 
     public function destroy(Request $request): RedirectResponse

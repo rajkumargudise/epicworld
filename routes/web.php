@@ -1,17 +1,28 @@
 <?php
 
 use App\Http\Controllers\Admin\ArticleController;
+use App\Http\Controllers\Account\AccountController;
+use App\Http\Controllers\Account\ContributorPostController;
+use App\Http\Controllers\Admin\CommentModerationController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FeedController;
+use App\Http\Controllers\Admin\LaunchController;
+use App\Http\Controllers\Admin\MessageController;
 use App\Http\Controllers\Admin\ReviewQueueController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\StoryController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Public\ArticleController as PublicArticleController;
+use App\Http\Controllers\Public\AdsTxtController;
 use App\Http\Controllers\Public\CategoryController;
+use App\Http\Controllers\Public\CommentController;
 use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Public\LatestController;
 use App\Http\Controllers\Public\LiveNewsController;
+use App\Http\Controllers\Public\NewsSitemapController;
+use App\Http\Controllers\Public\PageController;
 use App\Http\Controllers\Public\PrivacyController;
 use App\Http\Controllers\Public\RobotsController;
 use App\Http\Controllers\Public\SearchController;
@@ -49,6 +60,18 @@ Route::bind('category', function (string $slug) {
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/robots.txt', [RobotsController::class, 'index'])->name('robots');
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+Route::get('/sitemap-news.xml', NewsSitemapController::class)->name('sitemap.news');
+Route::get('/ads.txt', AdsTxtController::class)->name('ads.txt');
+
+Route::get('/about', [PageController::class, 'show'])->defaults('page', 'about')->name('about');
+Route::get('/editorial-policy', [PageController::class, 'show'])->defaults('page', 'editorial-policy')->name('editorial.policy');
+Route::get('/terms', [PageController::class, 'show'])->defaults('page', 'terms')->name('terms');
+Route::get('/write-for-us', [PageController::class, 'show'])->defaults('page', 'write-for-us')->name('write');
+Route::get('/contact', [PageController::class, 'contact'])->name('contact');
+Route::post('/contact', [PageController::class, 'sendContact'])->middleware('throttle:contact')->name('contact.send');
+
+Route::post('/article/{publicArticle:slug}/comments', [CommentController::class, 'store'])->middleware('throttle:comment')->name('comments.store');
+
 Route::get('/live', [LiveNewsController::class, 'index'])->name('live');
 Route::get('/live/{scope}', [LiveNewsController::class, 'index'])->whereIn('scope', ['world', 'news', 'local', 'videos'])->name('live.scope');
 Route::get('/live/{scope}/feed', [LiveNewsController::class, 'feed'])->whereIn('scope', ['world', 'news', 'local'])->name('live.feed');
@@ -65,12 +88,28 @@ Route::get('/privacy', [PrivacyController::class, 'index'])->name('privacy');
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:login');
+    Route::get('/register', [RegisterController::class, 'create'])->name('register');
+    Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:register');
 });
 
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    Route::prefix('admin')->name('admin.')->group(function () {
+    // Signed-in members (contributors, editors, admins): their own posts and password.
+    Route::prefix('account')->name('account.')->middleware('throttle:60,1')->group(function () {
+        Route::get('/', [ContributorPostController::class, 'dashboard'])->name('dashboard');
+        Route::get('/posts/create', [ContributorPostController::class, 'create'])->name('posts.create');
+        Route::post('/posts', [ContributorPostController::class, 'store'])->middleware('throttle:submit-post')->name('posts.store');
+        Route::get('/posts/{article}/edit', [ContributorPostController::class, 'edit'])->name('posts.edit');
+        Route::put('/posts/{article}', [ContributorPostController::class, 'update'])->middleware('throttle:submit-post')->name('posts.update');
+        Route::delete('/posts/{article}', [ContributorPostController::class, 'destroy'])->name('posts.destroy');
+        Route::get('/password', [AccountController::class, 'editPassword'])->name('password.edit');
+        Route::put('/password', [AccountController::class, 'updatePassword'])->name('password.update');
+    });
+
+    // The CMS: editors and admins only (Gate "access-admin"). Individual
+    // actions are further restricted by policies (publish/settings = admin).
+    Route::prefix('admin')->name('admin.')->middleware('can:access-admin')->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::get('/stories', [StoryController::class, 'index'])->name('stories.index');
@@ -78,6 +117,19 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/review', [ReviewQueueController::class, 'index'])->name('review.index');
         Route::post('/review/publish', [ReviewQueueController::class, 'publish'])->name('review.publish');
+        Route::post('/review/{article}/reject', [ReviewQueueController::class, 'reject'])->name('review.reject');
+
+        Route::get('/comments', [CommentModerationController::class, 'index'])->name('comments.index');
+        Route::put('/comments', [CommentModerationController::class, 'update'])->name('comments.update');
+
+        Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
+        Route::patch('/messages/{message}/read', [MessageController::class, 'toggleRead'])->name('messages.read');
+        Route::delete('/messages/{message}', [MessageController::class, 'destroy'])->name('messages.destroy');
+
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+
+        Route::get('/launch', [LaunchController::class, 'index'])->name('launch');
 
         Route::get('/feeds', [FeedController::class, 'index'])->name('feeds.index');
 

@@ -1,49 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Log in — EPIC World Admin</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="flex min-h-screen items-center justify-center bg-slate-50">
-    <div class="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 class="mb-6 text-lg font-semibold text-slate-900">EPIC World Admin</h1>
+@extends('layouts.public')
 
-        @if ($errors->any())
-            <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                <ul class="list-inside list-disc">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+@php
+    $context = 'auth';
+    $seoTitle = 'Log in';
+    $seoDescription = 'Log in to EPIC World.';
+    $canonicalUrl = route('login');
+    $indexable = false;
+@endphp
 
-        <form method="POST" action="{{ route('login') }}" class="space-y-4">
-            @csrf
+@section('content')
+    <div class="mx-auto max-w-md">
+        <div class="story-card rounded-3xl p-8">
+            <h1 class="text-2xl font-extrabold tracking-tight">Log in</h1>
+            <p class="mt-1 text-sm text-muted">EPIC World Admin &amp; contributor sign-in</p>
 
-            <div>
-                <label for="email" class="block text-sm font-medium text-slate-700">Email</label>
-                <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus
-                    class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
-            </div>
+            @if ($errors->any())
+                <div class="mt-5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                    <ul class="list-inside list-disc">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
-            <div>
-                <label for="password" class="block text-sm font-medium text-slate-700">Password</label>
-                <input id="password" type="password" name="password" required
-                    class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
-            </div>
+            <form method="POST" action="{{ route('login') }}" class="mt-6 space-y-4">
+                @csrf
+                <div>
+                    <label for="email" class="mb-1 block text-sm font-medium">Email</label>
+                    <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="email"
+                           class="w-full rounded-xl border border-line-strong bg-surface-2 px-4 py-2.5 text-sm text-ink outline-none focus:border-accent">
+                </div>
+                <div>
+                    <label for="password" class="mb-1 block text-sm font-medium">Password</label>
+                    <input id="password" type="password" name="password" required autocomplete="current-password"
+                           class="w-full rounded-xl border border-line-strong bg-surface-2 px-4 py-2.5 text-sm text-ink outline-none focus:border-accent">
+                </div>
+                <label class="flex items-center gap-2 text-sm text-muted">
+                    <input type="checkbox" name="remember"> Remember me
+                </label>
+                <button type="submit" class="btn-primary w-full rounded-full px-4 py-3 text-sm font-semibold">Log in</button>
+            </form>
 
-            <label class="flex items-center gap-2 text-sm text-slate-600">
-                <input type="checkbox" name="remember">
-                Remember me
-            </label>
-
-            <button type="submit" class="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700">
-                Log in
-            </button>
-        </form>
+            <p class="mt-6 text-center text-sm text-muted">New here? <a href="{{ route('register') }}" class="font-semibold text-accent hover:underline">Create a contributor account</a></p>
+        </div>
     </div>
-</body>
-</html>
+@endsection

@@ -27,7 +27,7 @@ class WorldNewsSourceSeeder extends Seeder
      */
     private const FEEDS = [
         // World
-        ['bbc-news', 'BBC News', 'bbc.co.uk', 'https://www.bbc.co.uk/news', 'publisher', 'global-affairs', 'BBC World', 'https://feeds.bbci.co.uk/news/world/rss.xml', 20],
+        ['bbc-news-world', 'BBC News', 'bbc.co.uk', 'https://www.bbc.co.uk/news', 'publisher', 'global-affairs', 'BBC World', 'https://feeds.bbci.co.uk/news/world/rss.xml', 20],
         ['al-jazeera', 'Al Jazeera', 'aljazeera.com', 'https://www.aljazeera.com', 'publisher', 'global-affairs', 'Al Jazeera', 'https://www.aljazeera.com/xml/rss/all.xml', 20],
         ['the-guardian', 'The Guardian', 'theguardian.com', 'https://www.theguardian.com', 'publisher', 'global-affairs', 'Guardian World', 'https://www.theguardian.com/world/rss', 20],
         ['deutsche-welle', 'DW', 'dw.com', 'https://www.dw.com', 'publisher', 'global-affairs', 'DW Top Stories', 'https://rss.dw.com/xml/rss-en-all', 30],
@@ -40,7 +40,7 @@ class WorldNewsSourceSeeder extends Seeder
         ['times-of-india', 'The Times of India', 'timesofindia.indiatimes.com', 'https://timesofindia.indiatimes.com', 'publisher', 'society', 'TOI Top Stories', 'https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms', 20],
 
         // Technology & AI
-        ['bbc-news', 'BBC News', 'bbc.co.uk', 'https://www.bbc.co.uk/news', 'publisher', 'software', 'BBC Technology', 'https://feeds.bbci.co.uk/news/technology/rss.xml', 30],
+        ['bbc-news-technology', 'BBC News', 'bbc.co.uk', 'https://www.bbc.co.uk/news', 'publisher', 'software', 'BBC Technology', 'https://feeds.bbci.co.uk/news/technology/rss.xml', 30],
         ['techcrunch', 'TechCrunch', 'techcrunch.com', 'https://techcrunch.com', 'publisher', 'software', 'TechCrunch', 'https://techcrunch.com/feed/', 20],
         ['the-verge', 'The Verge', 'theverge.com', 'https://www.theverge.com', 'publisher', 'gadgets', 'The Verge', 'https://www.theverge.com/rss/index.xml', 30],
         ['ars-technica', 'Ars Technica', 'arstechnica.com', 'https://arstechnica.com', 'publisher', 'software', 'Ars Technica', 'https://feeds.arstechnica.com/arstechnica/index', 30],
@@ -49,11 +49,11 @@ class WorldNewsSourceSeeder extends Seeder
         ['krebs-on-security', 'Krebs on Security', 'krebsonsecurity.com', 'https://krebsonsecurity.com', 'publisher', 'threats', 'Krebs on Security', 'https://krebsonsecurity.com/feed/', 60],
 
         // Business & finance
-        ['bbc-news', 'BBC News', 'bbc.co.uk', 'https://www.bbc.co.uk/news', 'publisher', 'markets', 'BBC Business', 'https://feeds.bbci.co.uk/news/business/rss.xml', 30],
+        ['bbc-news-business', 'BBC News', 'bbc.co.uk', 'https://www.bbc.co.uk/news', 'publisher', 'markets', 'BBC Business', 'https://feeds.bbci.co.uk/news/business/rss.xml', 30],
         ['cnbc', 'CNBC', 'cnbc.com', 'https://www.cnbc.com', 'publisher', 'markets', 'CNBC Top News', 'https://www.cnbc.com/id/100003114/device/rss/rss.html', 20],
 
         // Science
-        ['bbc-news', 'BBC News', 'bbc.co.uk', 'https://www.bbc.co.uk/news', 'publisher', 'research', 'BBC Science & Environment', 'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml', 60],
+        ['bbc-news-science', 'BBC News', 'bbc.co.uk', 'https://www.bbc.co.uk/news', 'publisher', 'research', 'BBC Science & Environment', 'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml', 60],
         ['sciencedaily', 'ScienceDaily', 'sciencedaily.com', 'https://www.sciencedaily.com', 'publisher', 'research', 'ScienceDaily Top', 'https://www.sciencedaily.com/rss/top.xml', 60],
     ];
 

@@ -33,7 +33,7 @@ class ReviewQueueController extends Controller
         $this->authorize('viewAny', Article::class);
 
         $articles = Article::query()
-            ->with(['category', 'story.sources'])
+            ->with(['category', 'story.sources', 'author'])
             ->where('status', ArticleStatus::Review)
             ->orderByDesc('updated_at')
             ->paginate(25);
@@ -43,6 +43,27 @@ class ReviewQueueController extends Controller
         });
 
         return view('admin.review', ['articles' => $articles]);
+    }
+
+    /**
+     * Send a community post back to its author with feedback. The post
+     * returns to Draft (editable by the author), never published.
+     */
+    public function reject(Request $request, Article $article): RedirectResponse
+    {
+        $this->authorize('approve', $article);
+
+        abort_unless($article->isContributed() && $article->status === ArticleStatus::Review, 404);
+
+        $data = $request->validate(['reason' => ['required', 'string', 'min:5', 'max:1000']]);
+
+        $metadata = $article->editorial_metadata ?? [];
+        $metadata['rejection_reason'] = trim($data['reason']);
+        $metadata['rejected_at'] = now()->toIso8601String();
+
+        $article->update(['status' => ArticleStatus::Draft, 'editorial_metadata' => $metadata]);
+
+        return back()->with('status', 'Post sent back to the author with your feedback.');
     }
 
     public function publish(Request $request): RedirectResponse

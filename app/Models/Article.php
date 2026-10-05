@@ -62,6 +62,16 @@ class Article extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function comments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    public function isContributed(): bool
+    {
+        return ($this->editorial_metadata['source'] ?? null) === 'contributor';
+    }
+
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class);

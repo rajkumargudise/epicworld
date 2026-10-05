@@ -40,6 +40,15 @@ class ArticleQualityEvaluator
             $issues[] = 'missing_category';
         }
 
+        // Human-written content (a contributor's post, an imported blog
+        // post) has no AI evidence ledger to check; the human editor's
+        // review replaces the "supporting facts" requirement.
+        $metadata = $article->editorial_metadata ?? [];
+
+        if (($metadata['source'] ?? null) === 'contributor' || ($metadata['imported_from'] ?? null) === 'wordpress') {
+            return ['passed' => $issues === [], 'issues' => $issues];
+        }
+
         $story = $article->story;
 
         if ($story === null) {

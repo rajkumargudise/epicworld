@@ -14,9 +14,13 @@
                 <a href="{{ route('admin.dashboard') }}" class="font-semibold">EPIC World</a>
                 <a href="{{ route('admin.dashboard') }}" class="text-slate-600 hover:text-slate-900">Dashboard</a>
                 <a href="{{ route('admin.review.index') }}" class="text-slate-600 hover:text-slate-900">Review</a>
+                <a href="{{ route('admin.comments.index') }}" class="text-slate-600 hover:text-slate-900">Comments</a>
+                <a href="{{ route('admin.messages.index') }}" class="text-slate-600 hover:text-slate-900">Messages</a>
                 <a href="{{ route('admin.stories.index') }}" class="text-slate-600 hover:text-slate-900">Stories</a>
                 <a href="{{ route('admin.feeds.index') }}" class="text-slate-600 hover:text-slate-900">Feeds</a>
+                <a href="{{ route('admin.launch') }}" class="text-slate-600 hover:text-slate-900">Google</a>
                 @if (auth()->user()->isAdmin())
+                    <a href="{{ route('admin.users.index') }}" class="text-slate-600 hover:text-slate-900">Users</a>
                     <a href="{{ route('admin.settings.edit') }}" class="text-slate-600 hover:text-slate-900">Settings</a>
                 @endif
             </nav>

@@ -63,12 +63,29 @@ class SensitiveContentRouter
      *
      * @return array{sensitive: bool, reason: ?string, topic_id: ?int, topic_name: ?string, category_id: ?int, category_name: ?string, evaluated_at: string, human_reviewed_at: ?string}
      */
+    private function isHumanAuthored(Article $article): bool
+    {
+        $metadata = $article->editorial_metadata ?? [];
+
+        return ($metadata['source'] ?? null) === 'contributor' || ($metadata['imported_from'] ?? null) === 'wordpress';
+    }
+
     public function annotate(Article $article): array
     {
         $story = $article->story;
-        $decision = $story !== null
-            ? $this->evaluate($story)
-            : $this->decision(sensitive: true, reason: 'no_story');
+        if ($story !== null) {
+            $decision = $this->evaluate($story);
+        } elseif ($this->isHumanAuthored($article)) {
+            // A contributor post or imported blog post has no AI story to
+            // classify; the editor reviewing it is the human gate. It is
+            // still held for explicit confirmation if its category is sensitive.
+            $category = $article->category;
+            $decision = $category?->is_sensitive
+                ? $this->decision(sensitive: true, reason: 'sensitive_category', category: $category)
+                : $this->decision(sensitive: false, reason: null, category: $category);
+        } else {
+            $decision = $this->decision(sensitive: true, reason: 'no_story');
+        }
 
         $previouslyReviewed = $article->editorial_metadata['sensitivity']['human_reviewed_at'] ?? null;
         $decision['human_reviewed_at'] = $previouslyReviewed;

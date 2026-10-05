@@ -40,7 +40,12 @@
                                 <td class="px-4 py-3">
                                     <input type="checkbox" name="ids[]" value="{{ $article->id }}" @disabled($article->needs_sensitive_review)>
                                 </td>
-                                <td class="px-4 py-3 font-medium">{{ $article->title }}</td>
+                                <td class="px-4 py-3 font-medium">
+                                    {{ $article->title }}
+                                    @if ($article->isContributed())
+                                        <span class="ml-1 rounded bg-indigo-100 px-1.5 py-0.5 text-xs font-normal text-indigo-800">Community post by {{ $article->author?->name }}</span>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-3 text-slate-600">{{ $article->category?->name ?? '—' }}</td>
                                 <td class="px-4 py-3 text-slate-600">{{ $article->story?->sources->pluck('name')->implode(', ') ?: '—' }}</td>
                                 <td class="px-4 py-3">
@@ -52,12 +57,21 @@
                                 </td>
                                 <td class="px-4 py-3 text-right">
                                     <a href="{{ route('admin.articles.edit', $article) }}" class="text-slate-600 underline hover:text-slate-900">Open</a>
+                                    @if ($article->isContributed())
+                                        <button type="button" class="ml-3 text-red-600 underline hover:text-red-800"
+                                                onclick="var r = prompt('Feedback for the author (required):'); if (r && r.trim().length >= 5) { var f = document.getElementById('reject-form'); f.action = '{{ route('admin.review.reject', $article) }}'; f.reason.value = r; f.submit(); }">Send back</button>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
+        </form>
+
+        <form id="reject-form" method="POST" class="hidden">
+            @csrf
+            <input type="hidden" name="reason">
         </form>
 
         <div class="mt-4">{{ $articles->links() }}</div>

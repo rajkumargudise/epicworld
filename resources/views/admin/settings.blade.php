@@ -51,9 +51,55 @@
                 <input id="gemini_api_key" name="gemini_api_key" type="password" autocomplete="off" placeholder="{{ $geminiKeySet ? 'Leave blank to keep the current key' : '' }}"
                        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
             </div>
+            <div>
+                <label for="gemini_model" class="mb-1 block text-sm font-medium">Model</label>
+                <input id="gemini_model" name="gemini_model" type="text" value="{{ old('gemini_model', $geminiModel) }}"
+                       class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+            </div>
             <label class="flex items-center gap-2 text-xs text-slate-600">
                 <input type="checkbox" name="clear_gemini_api_key" value="1"> Remove the stored Gemini key
             </label>
+        </fieldset>
+
+        <fieldset class="space-y-4 rounded-lg border border-slate-200 bg-white p-5">
+            <legend class="px-1 text-sm font-semibold">Google &amp; site</legend>
+
+            <div>
+                <label for="ga4_measurement_id" class="mb-1 block text-sm font-medium">Google Analytics 4 measurement ID</label>
+                <input id="ga4_measurement_id" name="ga4_measurement_id" type="text" value="{{ old('ga4_measurement_id', $ga4) }}" placeholder="G-ABC123DEF4"
+                       class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+                <p class="mt-1 text-xs text-slate-500">Loads only after a visitor accepts cookies.</p>
+            </div>
+
+            <div>
+                <label for="gsc_verification" class="mb-1 block text-sm font-medium">Search Console verification (HTML tag)</label>
+                <input id="gsc_verification" name="gsc_verification" type="text" value="{{ old('gsc_verification', $gsc) }}" placeholder="Paste the token or the whole &lt;meta&gt; tag"
+                       class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+            </div>
+
+            <div>
+                <label for="adsense_publisher_id" class="mb-1 block text-sm font-medium">AdSense publisher ID</label>
+                <input id="adsense_publisher_id" name="adsense_publisher_id" type="text" value="{{ old('adsense_publisher_id', $adsensePublisher) }}" placeholder="ca-pub-1234567890123456"
+                       class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+                <p class="mt-1 text-xs text-slate-500">Saving an ID also publishes <code>/ads.txt</code> and the AdSense account meta tag (both needed for approval).</p>
+            </div>
+
+            <label class="flex items-start gap-2 text-sm text-slate-700">
+                <input type="hidden" name="adsense_enabled" value="0">
+                <input type="checkbox" name="adsense_enabled" value="1" @checked(old('adsense_enabled', $adsenseEnabled)) class="mt-1">
+                <span>Show AdSense ads <span class="text-slate-500">(only after Google approves your site, only on article and listing pages, and only for visitors who accept cookies)</span></span>
+            </label>
+
+            <label class="flex items-center gap-2 text-sm text-slate-700">
+                <input type="hidden" name="comments_enabled" value="0">
+                <input type="checkbox" name="comments_enabled" value="1" @checked(old('comments_enabled', $commentsEnabled))>
+                Allow reader comments (always moderated)
+            </label>
+
+            <div>
+                <label for="contact_email" class="mb-1 block text-sm font-medium">Public contact email <span class="text-slate-500">(optional)</span></label>
+                <input id="contact_email" name="contact_email" type="email" value="{{ old('contact_email', $contactEmail) }}" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+            </div>
         </fieldset>
 
         <fieldset class="space-y-3 rounded-lg border border-slate-200 bg-white p-5">
