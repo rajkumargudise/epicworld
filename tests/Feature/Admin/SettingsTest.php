@@ -64,6 +64,21 @@ class SettingsTest extends TestCase
         $this->assertSame('fake', app(AiProviderManager::class)->resolve()->name());
     }
 
+    public function test_the_provider_is_not_ready_until_a_key_exists_and_the_queue_is_left_alone(): void
+    {
+        config(['ai.default' => 'openai', 'ai.providers.openai.api_key' => null]);
+        $manager = app(AiProviderManager::class);
+
+        $this->assertFalse($manager->isReady());
+        $this->artisan('editorial:process')->expectsOutputToContain('no API key yet')->assertSuccessful();
+
+        Setting::write('openai_api_key', 'sk-now-set');
+        $this->assertTrue($manager->isReady());
+
+        config(['ai.default' => 'fake']);
+        $this->assertTrue($manager->isReady());
+    }
+
     public function test_a_user_can_change_their_own_password(): void
     {
         $user = User::factory()->admin()->create(['password' => 'old-password-12345']);

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Ai\AiProviderManager;
 use App\Services\Editorial\EditorialJobProcessor;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
@@ -31,6 +32,15 @@ class ProcessEditorialJobs extends Command
     public function handle(EditorialJobProcessor $processor): int
     {
         $limit = max(1, (int) $this->option('limit'));
+
+        // With no API key for the selected provider every job would just
+        // fail and burn its attempt. Leave the queue untouched until a
+        // key is configured (Admin > Settings).
+        if (! app(AiProviderManager::class)->isReady()) {
+            $this->warn('The selected AI provider has no API key yet; leaving the queue untouched.');
+
+            return self::SUCCESS;
+        }
 
         $lock = Cache::lock(self::LOCK_KEY, (int) config('editorial.schedule.lock_seconds', 1800));
 

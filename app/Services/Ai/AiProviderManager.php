@@ -52,6 +52,27 @@ class AiProviderManager
     }
 
     /**
+     * Whether the provider a call would use right now can possibly
+     * succeed: the fake provider always can, a real one needs an API key.
+     */
+    public function isReady(): bool
+    {
+        $driver = $this->defaultDriver();
+
+        if ($driver === 'fake') {
+            return true;
+        }
+
+        $key = match ($driver) {
+            'openai' => Setting::read('openai_api_key') ?? config('ai.providers.openai.api_key'),
+            'gemini' => Setting::read('gemini_api_key') ?? config('ai.providers.gemini.api_key'),
+            default => null,
+        };
+
+        return filled($key);
+    }
+
+    /**
      * An administrator-selected provider (Admin > Settings) wins over
      * the environment default, but never when the app runs with the
      * "fake" provider (tests), so stored settings can't leak into them.
