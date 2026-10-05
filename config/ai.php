@@ -55,6 +55,14 @@ return [
             'timeout' => env('GEMINI_TIMEOUT_SECONDS'),
         ],
 
+        'openai' => [
+            'driver' => 'openai',
+            'api_key' => env('OPENAI_API_KEY'),
+            'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+            'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
+            'timeout' => env('OPENAI_TIMEOUT_SECONDS', 60),
+        ],
+
         'fake' => [
             'driver' => 'fake',
         ],

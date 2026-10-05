@@ -15,9 +15,13 @@
                 <a href="{{ route('admin.dashboard') }}" class="text-slate-600 hover:text-slate-900">Dashboard</a>
                 <a href="{{ route('admin.stories.index') }}" class="text-slate-600 hover:text-slate-900">Stories</a>
                 <a href="{{ route('admin.feeds.index') }}" class="text-slate-600 hover:text-slate-900">Feeds</a>
+                @if (auth()->user()->isAdmin())
+                    <a href="{{ route('admin.settings.edit') }}" class="text-slate-600 hover:text-slate-900">Settings</a>
+                @endif
             </nav>
             <div class="flex items-center gap-4 text-sm">
                 <span class="text-slate-500">{{ auth()->user()->name }} &middot; {{ auth()->user()->role ?? 'no role' }}</span>
+                <a href="{{ route('admin.password.edit') }}" class="text-slate-600 hover:text-slate-900">Password</a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="text-slate-600 hover:text-slate-900">Log out</button>

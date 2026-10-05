@@ -6,39 +6,33 @@
 
 @section('content')
     <article class="mx-auto max-w-3xl">
-        @if ($article->category)
-            <a href="{{ route('category.show', $article->category) }}"
-               class="text-xs font-semibold uppercase tracking-wide text-indigo-600 hover:text-indigo-800">
-                {{ $article->category->name }}
-            </a>
-        @endif
+        <nav class="mb-4 text-sm text-slate-500" aria-label="Breadcrumb">
+            <a href="{{ route('home') }}" class="hover:text-brand-600">Home</a>
+            @if ($article->category)
+                <span aria-hidden="true">/</span>
+                <a href="{{ route('category.show', $article->category) }}" class="hover:text-brand-600">{{ $article->category->name }}</a>
+            @endif
+        </nav>
 
-        <h1 class="mt-2 text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">{{ $article->title }}</h1>
+        <h1 class="text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl sm:leading-[1.1]">{{ $article->title }}</h1>
 
         @if ($article->displayExcerpt())
-            <p class="mt-4 text-lg text-slate-600">{{ $article->displayExcerpt() }}</p>
+            <p class="mt-5 text-lg leading-relaxed text-slate-600 sm:text-xl">{{ $article->displayExcerpt() }}</p>
         @endif
 
-        <div class="mt-4 flex flex-wrap items-center gap-2 border-b border-slate-200 pb-4 text-sm text-slate-500">
+        <div class="mt-6 flex flex-wrap items-center gap-2 border-y border-slate-200 py-4 text-sm text-slate-500">
             @if ($article->author)
-                <span class="font-medium text-slate-700">{{ $article->author->name }}</span>
+                <span class="font-semibold text-slate-700">{{ $article->author->name }}</span>
                 <span aria-hidden="true">&middot;</span>
             @endif
             @if ($article->published_at)
-                <span>
-                    Published
-                    <time datetime="{{ $article->published_at->toIso8601String() }}">
-                        {{ $article->published_at->format('M j, Y \a\t g:i A') }}
-                    </time>
-                </span>
+                <time datetime="{{ $article->published_at->toIso8601String() }}">{{ $article->published_at->format('M j, Y') }}</time>
             @endif
             @if ($article->updated_content_at && $article->published_at && ! $article->updated_content_at->equalTo($article->published_at))
                 <span aria-hidden="true">&middot;</span>
                 <span>
                     Updated
-                    <time datetime="{{ $article->updated_content_at->toIso8601String() }}">
-                        {{ $article->updated_content_at->format('M j, Y \a\t g:i A') }}
-                    </time>
+                    <time datetime="{{ $article->updated_content_at->toIso8601String() }}">{{ $article->updated_content_at->format('M j, Y') }}</time>
                 </span>
             @endif
             <span aria-hidden="true">&middot;</span>
@@ -46,22 +40,22 @@
         </div>
 
         @if ($article->featured_image)
-            <img src="{{ $article->featured_image }}" alt="{{ $article->title }}" class="mt-6 w-full rounded-lg object-cover">
+            <img src="{{ $article->featured_image }}" alt="{{ $article->title }}" class="mt-8 w-full rounded-2xl object-cover shadow-sm">
         @endif
 
         <x-ad-slot name="article_top" :context="$context" />
 
-        <div class="prose prose-slate mt-6 max-w-none">
+        <div class="article-body mt-8">
             {!! $article->displayContentHtml() !!}
         </div>
 
         <x-ad-slot name="article_bottom" :context="$context" />
 
         @if ($article->tags->isNotEmpty())
-            <div class="mt-8 flex flex-wrap gap-2">
+            <div class="mt-10 flex flex-wrap gap-2">
                 @foreach ($article->tags as $tag)
                     <a href="{{ route('tag.show', $tag) }}"
-                       class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200">
+                       class="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200 transition hover:bg-brand-50 hover:text-brand-700 hover:ring-brand-100">
                         #{{ $tag->name }}
                     </a>
                 @endforeach
@@ -73,11 +67,11 @@
         @endphp
 
         @if ($sources->isNotEmpty())
-            <div class="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                <span class="font-semibold text-slate-700">Sources:</span>
+            <div class="mt-8 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">
+                <span class="font-semibold text-slate-800">Sources:</span>
                 @foreach ($sources as $source)
                     @if ($source->homepage_url)
-                        <a href="{{ $source->homepage_url }}" rel="nofollow noopener" target="_blank" class="text-indigo-600 hover:underline">{{ $source->name }}</a>
+                        <a href="{{ $source->homepage_url }}" rel="nofollow noopener" target="_blank" class="text-brand-600 hover:underline">{{ $source->name }}</a>
                     @else
                         <span>{{ $source->name }}</span>
                     @endif
@@ -90,9 +84,9 @@
     </article>
 
     @if ($relatedArticles->isNotEmpty())
-        <section class="mx-auto mt-12 max-w-3xl border-t border-slate-200 pt-8">
-            <h2 class="mb-4 text-lg font-semibold text-slate-900">Related articles</h2>
-            <div class="grid gap-6 sm:grid-cols-2">
+        <section class="mx-auto mt-16 max-w-5xl border-t border-slate-200 pt-10">
+            <h2 class="mb-5 text-2xl font-extrabold tracking-tight text-slate-900">Related articles</h2>
+            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($relatedArticles as $relatedArticle)
                     @include('partials.article-card', ['article' => $relatedArticle])
                 @endforeach

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Models\Category;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
@@ -29,8 +31,21 @@ class HomeController extends Controller
 
     private const BREAKING_COUNT = 5;
 
-    public function index(): View
+    public function index(Request $request): View|RedirectResponse
     {
+        // Old WordPress "/?p=<id>" links.
+        $postId = $request->query('p');
+
+        if (is_scalar($postId) && ctype_digit((string) $postId)) {
+            $legacy = Article::publiclyVisible()
+                ->whereJsonContains('editorial_metadata->wp_post_id', (int) $postId)
+                ->first();
+
+            if ($legacy) {
+                return redirect()->route('article.show', $legacy, 301);
+            }
+        }
+
         $featured = Article::publiclyVisible()
             ->with(['category', 'author'])
             ->where('is_featured', true)

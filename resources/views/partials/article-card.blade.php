@@ -1,39 +1,32 @@
 {{-- Expects $article (with category and author eager-loaded). --}}
-<article class="group flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white">
-    <a href="{{ route('article.show', $article) }}" class="block">
+<article class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-200/70">
+    <a href="{{ route('article.show', $article) }}" class="block overflow-hidden" tabindex="-1" aria-hidden="true">
         @if ($article->featured_image)
-            <img src="{{ $article->featured_image }}" alt="{{ $article->title }}" class="h-44 w-full object-cover">
+            <img src="{{ $article->featured_image }}" alt="" loading="lazy" class="aspect-[16/10] w-full object-cover transition duration-500 group-hover:scale-105">
         @else
-            <div class="h-44 w-full bg-slate-100"></div>
+            <div class="aspect-[16/10] w-full bg-gradient-to-br from-brand-100 via-slate-100 to-slate-200"></div>
         @endif
     </a>
-    <div class="flex flex-1 flex-col gap-2 p-4">
+    <div class="flex flex-1 flex-col gap-2 p-5">
         @if ($article->category)
-            <a href="{{ route('category.show', $article->category) }}"
-               class="text-xs font-semibold uppercase tracking-wide text-indigo-600 hover:text-indigo-800">
+            <a href="{{ route('category.show', $article->category) }}" class="text-xs font-semibold uppercase tracking-wider text-brand-600 hover:text-brand-700">
                 {{ $article->category->name }}
             </a>
         @endif
 
-        <h3 class="text-base font-semibold leading-snug text-slate-900">
-            <a href="{{ route('article.show', $article) }}" class="hover:underline">{{ $article->title }}</a>
+        <h3 class="text-base font-bold leading-snug tracking-tight text-slate-900">
+            <a href="{{ route('article.show', $article) }}" class="group-hover:text-brand-700">{{ $article->title }}</a>
         </h3>
 
         @if ($article->displayExcerpt())
-            <p class="line-clamp-2 text-sm text-slate-600">{{ $article->displayExcerpt() }}</p>
+            <p class="line-clamp-2 text-sm leading-relaxed text-slate-600">{{ $article->displayExcerpt() }}</p>
         @endif
 
-        <div class="mt-auto flex items-center gap-2 pt-2 text-xs text-slate-500">
-            @if ($article->author)
-                <span>{{ $article->author->name }}</span>
+        <div class="mt-auto flex items-center gap-2 pt-3 text-xs text-slate-500">
+            @if ($article->published_at)
+                <time datetime="{{ $article->published_at->toIso8601String() }}">{{ $article->published_at->format('M j, Y') }}</time>
                 <span aria-hidden="true">&middot;</span>
             @endif
-            @if ($article->published_at)
-                <time datetime="{{ $article->published_at->toIso8601String() }}">
-                    {{ $article->published_at->diffForHumans() }}
-                </time>
-            @endif
-            <span aria-hidden="true">&middot;</span>
             <span>{{ $article->displayReadingTimeMinutes() }} min read</span>
         </div>
     </div>

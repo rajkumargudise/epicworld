@@ -2,10 +2,12 @@
 
 namespace App\Services\Ai;
 
+use App\Models\Setting;
 use App\Services\Ai\Contracts\AiProvider;
 use App\Services\Ai\Exceptions\UnknownAiProviderException;
 use App\Services\Ai\Providers\FakeAiProvider;
 use App\Services\Ai\Providers\GeminiProvider;
+use App\Services\Ai\Providers\OpenAiProvider;
 
 /**
  * Resolves the one AI provider a call should use. Selection is
@@ -23,7 +25,7 @@ class AiProviderManager
 {
     public function resolve(?string $driver = null): AiProvider
     {
-        $driver ??= config('ai.default');
+        $driver ??= $this->defaultDriver();
 
         $config = config("ai.providers.{$driver}");
 
@@ -33,13 +35,37 @@ class AiProviderManager
 
         return match ($config['driver'] ?? $driver) {
             'gemini' => new GeminiProvider([
-                'api_key' => $config['api_key'] ?? null,
+                'api_key' => Setting::read('gemini_api_key') ?? $config['api_key'] ?? null,
                 'model' => $config['model'] ?? 'gemini-2.0-flash',
                 'base_url' => $config['base_url'] ?? 'https://generativelanguage.googleapis.com/v1beta',
+                'timeout' => $config['timeout'] ?? config('ai.timeout', 30),
+            ]),
+            'openai' => new OpenAiProvider([
+                'api_key' => Setting::read('openai_api_key') ?? $config['api_key'] ?? null,
+                'model' => Setting::read('openai_model') ?? $config['model'] ?? 'gpt-4o-mini',
+                'base_url' => $config['base_url'] ?? 'https://api.openai.com/v1',
                 'timeout' => $config['timeout'] ?? config('ai.timeout', 30),
             ]),
             'fake' => app(FakeAiProvider::class),
             default => throw new UnknownAiProviderException((string) $driver),
         };
+    }
+
+    /**
+     * An administrator-selected provider (Admin > Settings) wins over
+     * the environment default, but never when the app runs with the
+     * "fake" provider (tests), so stored settings can't leak into them.
+     */
+    private function defaultDriver(): string
+    {
+        $default = (string) config('ai.default');
+
+        if ($default === 'fake') {
+            return $default;
+        }
+
+        $chosen = Setting::read('ai_provider');
+
+        return in_array($chosen, ['openai', 'gemini'], true) ? $chosen : $default;
     }
 }

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\ArticleController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FeedController;
+use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\StoryController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Public\ArticleController as PublicArticleController;
@@ -71,6 +72,11 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/feeds', [FeedController::class, 'index'])->name('feeds.index');
 
+        Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
+        Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+        Route::get('/account/password', [SettingsController::class, 'editPassword'])->name('password.edit');
+        Route::put('/account/password', [SettingsController::class, 'updatePassword'])->name('password.update');
+
         Route::get('/articles/{article}/edit', [ArticleController::class, 'edit'])->name('articles.edit');
         Route::put('/articles/{article}', [ArticleController::class, 'update'])->name('articles.update');
         Route::post('/articles/{article}/approve', [ArticleController::class, 'approve'])->name('articles.approve');
@@ -78,3 +84,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/articles/{article}/confirm-sensitive-review', [ArticleController::class, 'confirmSensitiveReview'])->name('articles.confirmSensitiveReview');
     });
 });
+
+// Old WordPress URLs -> new article URLs (301), else a normal 404.
+Route::fallback(\App\Http\Controllers\Public\LegacyUrlController::class);

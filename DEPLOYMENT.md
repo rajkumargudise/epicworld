@@ -267,7 +267,9 @@ SESSION_SAME_SITE=lax
 
 CACHE_STORE=database           # no Redis needed on shared hosting
 
-AI_PROVIDER=gemini
+AI_PROVIDER=openai
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o-mini
 GEMINI_API_KEY=
 
 DISCOVERY_SCHEDULE_ENABLED=true

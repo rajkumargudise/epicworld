@@ -6,4 +6,33 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-brand-50: #eef2ff;
+    --color-brand-100: #e0e7ff;
+    --color-brand-500: #6366f1;
+    --color-brand-600: #4f46e5;
+    --color-brand-700: #4338ca;
 }
+
+@layer base {
+    html { scroll-behavior: smooth; }
+    ::selection { background: var(--color-brand-100); }
+    :focus-visible { outline: 2px solid var(--color-brand-600); outline-offset: 2px; border-radius: 4px; }
+}
+
+/* Article body typography (no typography plugin installed). */
+.article-body { font-size: 1.1rem; line-height: 1.8; color: #1e293b; }
+.article-body > * + * { margin-top: 1.25em; }
+.article-body h2 { margin-top: 2em; font-size: 1.55em; font-weight: 700; line-height: 1.25; letter-spacing: -0.02em; color: #0f172a; }
+.article-body h3 { margin-top: 1.7em; font-size: 1.25em; font-weight: 600; line-height: 1.3; color: #0f172a; }
+.article-body a { color: var(--color-brand-600); text-decoration: underline; text-underline-offset: 3px; }
+.article-body ul, .article-body ol { padding-left: 1.4em; }
+.article-body ul { list-style: disc; }
+.article-body ol { list-style: decimal; }
+.article-body li + li { margin-top: 0.4em; }
+.article-body blockquote { border-left: 3px solid var(--color-brand-500); padding-left: 1em; color: #475569; font-style: italic; }
+.article-body img { border-radius: 0.75rem; max-width: 100%; height: auto; }
+.article-body pre { overflow-x: auto; border-radius: 0.75rem; background: #0f172a; padding: 1rem; color: #e2e8f0; font-size: 0.9em; }
+.article-body code:not(pre code) { border-radius: 4px; background: #f1f5f9; padding: 0.1em 0.35em; font-size: 0.9em; }
+.article-body table { width: 100%; border-collapse: collapse; font-size: 0.95em; }
+.article-body th, .article-body td { border-bottom: 1px solid #e2e8f0; padding: 0.5em 0.75em; text-align: left; }
