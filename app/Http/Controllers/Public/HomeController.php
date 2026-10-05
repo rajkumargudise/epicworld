@@ -103,7 +103,7 @@ class HomeController extends Controller
             'latest' => $latest,
             'breaking' => $breaking,
             'categorySections' => $categorySections,
-            'seoTitle' => config('app.name', 'EPIC World'),
+            'seoTitle' => config('app.name', 'EPIC World').' | Live World, India & Local News, Video & Explainers',
             'seoDescription' => 'The latest news, analysis, and explainers across technology, business, science, and the world.',
             'canonicalUrl' => route('home'),
             'indexable' => true,
@@ -126,11 +126,15 @@ class HomeController extends Controller
             '@graph' => [
                 [
                     '@type' => 'Organization',
+                    '@id' => route('home').'#organization',
                     'name' => config('app.name', 'EPIC World'),
                     'url' => route('home'),
+                    'logo' => ['@type' => 'ImageObject', 'url' => url('/brand/icon-512.png'), 'width' => 512, 'height' => 512],
                 ],
                 [
                     '@type' => 'WebSite',
+                    'publisher' => ['@id' => route('home').'#organization'],
+                    'inLanguage' => 'en',
                     'name' => config('app.name', 'EPIC World'),
                     'url' => route('home'),
                     'potentialAction' => [

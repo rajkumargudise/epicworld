@@ -39,6 +39,12 @@ class SecurityHeaders
         // never restricts anything the site itself does.
         $response->headers->set('Permissions-Policy', 'geolocation=(), camera=(), microphone=()');
 
+        // HTTPS-only for 6 months on the real site. Deliberately no includeSubDomains/preload:
+        // other sites on this hosting account share the domain.
+        if ($request->isSecure() && ! str_contains($request->getHost(), 'staging')) {
+            $response->headers->set('Strict-Transport-Security', 'max-age=15552000');
+        }
+
         // A staging address must never end up in search results.
         if (str_contains($request->getHost(), 'staging') || str_contains((string) parse_url((string) config('app.url'), PHP_URL_HOST), 'staging')) {
             $response->headers->set('X-Robots-Tag', 'noindex, nofollow');

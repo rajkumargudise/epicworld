@@ -25,8 +25,9 @@ class LegacyUrlController extends Controller
                 return redirect()->route('sitemap', [], 301);
             }
 
-            if ($request->is('feed', 'feed/*', 'comments/feed', 'comments/feed/*', 'rss', 'rss.xml')) {
-                return redirect()->route('latest', [], 301);
+            // The real /feed is served by FeedController; other old feed addresses point at it.
+            if ($request->is('feed/*', 'comments/feed', 'comments/feed/*', 'rss', 'rss.xml', 'rss/*')) {
+                return redirect()->route('feed', [], 301);
             }
         }
 

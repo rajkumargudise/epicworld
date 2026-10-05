@@ -83,15 +83,17 @@ class SeoTest extends TestCase
         $response->assertSee('"keywords":"Automation"', false);
     }
 
-    public function test_article_json_ld_omits_author_and_image_when_the_article_has_none(): void
+    public function test_article_json_ld_falls_back_to_the_site_as_author_and_the_brand_image(): void
     {
         $article = $this->publishedArticle(['title' => 'No byline or image on this one']);
 
-        $response = $this->get(route('article.show', $article));
+        $html = $this->get(route('article.show', $article))->assertOk()->getContent();
 
-        $response->assertOk();
-        $response->assertDontSee('"author"', false);
-        $response->assertDontSee('"image"', false);
+        // No fabricated person: with no author the publisher itself is credited.
+        $this->assertStringContainsString('"author":{"@type":"Organization"', str_replace('\\u0022', '"', $html) ?: $html) || $this->assertMatchesRegularExpression('/author.{0,40}Organization/', $html);
+        // Google's article rich results need an image: the real brand card is used.
+        $this->assertStringContainsString('/brand/og-default.jpg', $html);
+        $this->assertStringContainsString('BreadcrumbList', $html);
     }
 
     public function test_article_json_ld_is_safely_encoded_against_script_context_breakout(): void
@@ -116,13 +118,15 @@ class SeoTest extends TestCase
         $response->assertSee('SearchAction', false);
     }
 
-    public function test_organization_and_website_schema_never_invent_logo_or_social_profiles(): void
+    public function test_organization_schema_uses_the_real_brand_logo_and_invents_no_social_profiles(): void
     {
         $response = $this->get(route('home'));
 
         $response->assertOk();
-        $response->assertDontSee('"logo"', false);
+        $response->assertSee('/brand/icon-512.png', false);
         $response->assertDontSee('"sameAs"', false);
+        $this->assertFileExists(public_path('brand/icon-512.png'));
+        $this->assertFileExists(public_path('brand/og-default.jpg'));
     }
 
     public function test_a_second_page_of_latest_is_noindex_follow_with_a_self_referencing_canonical(): void

@@ -28,8 +28,15 @@
     $showCanonical = $showCanonical ?? $indexable;
     $robotsContent = $robotsContent ?? ($indexable ? 'index, follow' : 'noindex, nofollow');
 @endphp
-<title>{{ $seoTitle }}</title>
-<meta name="description" content="{{ $seoDescription }}">
+@php
+    $siteName = config('app.name', 'EPIC World');
+    // "Page title | EPIC World" when it fits in a search result (~60 chars); category pages already carry the name.
+    $fullTitle = (str_contains($seoTitle, $siteName) || mb_strlen($seoTitle) > 48) ? $seoTitle : $seoTitle.' | '.$siteName;
+    $shareImage = ! empty($ogImage) ? $ogImage : url('/brand/og-default.jpg');
+    $shareImageIsDefault = empty($ogImage);
+@endphp
+<title>{{ $fullTitle }}</title>
+<meta name="description" content="{{ \Illuminate\Support\Str::limit(strip_tags((string) $seoDescription), 158, '…') }}">
 <meta name="robots" content="{{ $robotsContent }}">
 
 @if ($showCanonical && ! empty($canonicalUrl))
@@ -38,16 +45,21 @@
 
 @if ($indexable)
     <meta property="og:type" content="{{ $ogType ?? 'website' }}">
-    <meta property="og:title" content="{{ $seoTitle }}">
+    <meta property="og:title" content="{{ $fullTitle }}">
+    <meta property="og:locale" content="en_IN">
     <meta property="og:description" content="{{ $seoDescription }}">
     <meta property="og:url" content="{{ $canonicalUrl }}">
     <meta property="og:site_name" content="{{ config('app.name', 'EPIC World') }}">
-    @if (! empty($ogImage))
-        <meta property="og:image" content="{{ $ogImage }}">
+    <meta property="og:image" content="{{ $shareImage }}">
+    @if ($shareImageIsDefault)
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:alt" content="EPIC World">
     @endif
 
-    <meta name="twitter:card" content="{{ ! empty($ogImage) ? 'summary_large_image' : 'summary' }}">
-    <meta name="twitter:title" content="{{ $seoTitle }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="{{ $shareImage }}">
+    <meta name="twitter:title" content="{{ $fullTitle }}">
     <meta name="twitter:description" content="{{ $seoDescription }}">
 
     @if (! empty($jsonLd))
@@ -59,6 +71,9 @@
             close the tag early and inject markup; these flags make
             that impossible regardless of what real content contains.
         --}}
-        <script type="application/ld+json">{!! json_encode($jsonLd, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) !!}</script>
+        <script type="application/ld+json">{!! json_encode($jsonLd, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
+    @endif
+    @if (! empty($breadcrumbJsonLd))
+        <script type="application/ld+json">{!! json_encode($breadcrumbJsonLd, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
     @endif
 @endif

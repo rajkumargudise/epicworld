@@ -45,8 +45,8 @@ class LegacyUrlRedirectTest extends TestCase
             $this->get($old)->assertStatus(301)->assertRedirect(route('sitemap'));
         }
 
-        foreach (['/feed', '/feed/', '/comments/feed'] as $old) {
-            $this->get($old)->assertStatus(301)->assertRedirect(route('latest'));
+        foreach (['/comments/feed', '/rss', '/rss.xml'] as $old) {
+            $this->get($old)->assertStatus(301)->assertRedirect(route('feed'));
         }
     }
 

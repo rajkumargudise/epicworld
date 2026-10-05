@@ -32,7 +32,7 @@ class SitemapController extends Controller
         ob_start();
 
         echo '<?xml version="1.0" encoding="UTF-8"?>'."\n";
-        echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
+        echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">'."\n";
 
         $this->writeDiscoveryUrls();
         $this->writeStaticUrls();
@@ -109,21 +109,24 @@ class SitemapController extends Controller
     {
         Article::publiclyVisible()
             ->where('allow_indexing', true)
-            ->select(['id', 'slug', 'published_at', 'updated_content_at'])
+            ->select(['id', 'slug', 'title', 'featured_image', 'published_at', 'updated_content_at'])
             ->orderBy('id')
             ->cursor()
             ->each(function (Article $article): void {
                 $lastmod = ($article->updated_content_at ?? $article->published_at)?->toAtomString();
-                $this->writeUrl(route('article.show', $article), $lastmod);
+                $this->writeUrl(route('article.show', $article), $lastmod, $article->featured_image, $article->title);
             });
     }
 
-    private function writeUrl(string $loc, ?string $lastmod = null): void
+    private function writeUrl(string $loc, ?string $lastmod = null, ?string $image = null, ?string $imageTitle = null): void
     {
         echo '  <url>'."\n";
         echo '    <loc>'.e($loc).'</loc>'."\n";
         if ($lastmod !== null) {
             echo '    <lastmod>'.e($lastmod).'</lastmod>'."\n";
+        }
+        if ($image !== null && preg_match('#^https://#i', $image)) {
+            echo '    <image:image><image:loc>'.e($image).'</image:loc>'.($imageTitle ? '<image:title>'.e($imageTitle).'</image:title>' : '').'</image:image>'."\n";
         }
         echo '  </url>'."\n";
     }

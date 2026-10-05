@@ -19,6 +19,7 @@ use App\Http\Controllers\Public\ArticleController as PublicArticleController;
 use App\Http\Controllers\Public\AdsTxtController;
 use App\Http\Controllers\Public\CategoryController;
 use App\Http\Controllers\Public\CommentController;
+use App\Http\Controllers\Public\FeedController as PublicFeedController;
 use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Public\LatestController;
 use App\Http\Controllers\Public\LiveNewsController;
@@ -63,6 +64,7 @@ Route::get('/robots.txt', [RobotsController::class, 'index'])->name('robots');
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 Route::get('/sitemap-news.xml', NewsSitemapController::class)->name('sitemap.news');
 Route::get('/ads.txt', AdsTxtController::class)->name('ads.txt');
+Route::get('/feed', PublicFeedController::class)->name('feed');
 
 Route::get('/about', [PageController::class, 'show'])->defaults('page', 'about')->name('about');
 Route::get('/editorial-policy', [PageController::class, 'show'])->defaults('page', 'editorial-policy')->name('editorial.policy');

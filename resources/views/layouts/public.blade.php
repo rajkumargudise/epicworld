@@ -4,6 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#07070d">
+    <link rel="icon" href="/favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/brand/favicon-16x16.png">
+    <link rel="apple-touch-icon" href="/brand/apple-touch-icon.png">
+    <link rel="manifest" href="/brand/site.webmanifest">
+    <link rel="alternate" type="application/rss+xml" title="EPIC World - latest stories" href="{{ route('feed') }}">
+    <link rel="preload" as="image" href="/brand/logo-white.webp" type="image/webp" fetchpriority="high">
     <script>
         document.documentElement.classList.add('js');
         try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
@@ -18,9 +25,8 @@
 
     <header class="sticky top-0 z-40 border-b border-line bg-bg/75 backdrop-blur-xl">
         <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-            <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2.5 whitespace-nowrap text-lg font-extrabold tracking-tight">
-                <span class="grid h-8 w-8 place-items-center rounded-lg text-sm font-black text-white" style="background: linear-gradient(135deg, var(--accent), var(--accent-2))">E</span>
-                <span>EPIC <span class="gradient-text">World</span></span>
+            <a href="{{ route('home') }}" class="flex shrink-0 items-center" aria-label="EPIC World - home">
+                @include('partials.logo', ['height' => 38])
             </a>
 
             <nav class="hidden items-center gap-0.5 whitespace-nowrap text-sm font-medium text-muted xl:flex" aria-label="Primary">
@@ -95,7 +101,7 @@
         <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6">
             <div class="grid gap-10 md:grid-cols-3">
                 <div>
-                    <a href="{{ route('home') }}" class="text-lg font-extrabold tracking-tight">EPIC <span class="gradient-text">World</span></a>
+                    <a href="{{ route('home') }}" class="inline-block" aria-label="EPIC World - home">@include('partials.logo', ['height' => 56])</a>
                     <p class="mt-3 max-w-xs text-sm leading-relaxed text-muted">Clear, well-sourced coverage of technology, AI, business, science and more.</p>
                 </div>
                 <div>
