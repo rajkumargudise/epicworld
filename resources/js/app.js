@@ -35,6 +35,32 @@ if ('IntersectionObserver' in window && revealItems.length) {
     revealItems.forEach((el) => el.classList.add('is-visible'));
 }
 
+// Table of contents scroll-spy
+const tocLinks = document.querySelectorAll('[data-toc-link]');
+const sections = document.querySelectorAll('[data-story-section]');
+if (tocLinks.length && sections.length && 'IntersectionObserver' in window) {
+    const spy = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                tocLinks.forEach((a) => a.classList.toggle('is-active', a.dataset.tocLink === entry.target.id));
+            }
+        });
+    }, { rootMargin: '-20% 0px -65% 0px' });
+    sections.forEach((s) => spy.observe(s));
+}
+
+// Copy link buttons
+document.querySelectorAll('[data-copy-link]').forEach((button) => {
+    button.addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.writeText(button.dataset.copyLink);
+            const original = button.textContent;
+            button.textContent = 'Copied!';
+            setTimeout(() => { button.textContent = original; }, 1800);
+        } catch (e) { /* clipboard unavailable */ }
+    });
+});
+
 // Article reading progress
 const bar = document.getElementById('read-progress');
 if (bar) {

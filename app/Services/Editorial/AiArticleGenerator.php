@@ -41,6 +41,7 @@ class AiArticleGenerator
         'title' => ['type' => 'string', 'max_length' => 180],
         'dek' => ['type' => 'string', 'max_length' => 300, 'required' => false],
         'body' => ['type' => 'string'],
+        'key_points' => ['type' => 'array', 'required' => false],
         'citations' => ['type' => 'array'],
     ];
 
@@ -151,7 +152,13 @@ class AiArticleGenerator
             .'claim in the body, include the exact supporting text from the evidence in the '
             .'citations array - a claim with no matching citation will cause the entire draft to '
             .'be rejected. If the evidence is too thin for a complete article, write only as much '
-            .'as it supports.';
+            .'as it supports. Write original prose in your own words - never copy sentences from '
+            .'the evidence - so a reader gets the full story without needing the source. '
+            .'Format the body as plain text: an opening paragraph, then sections that each start '
+            .'with a line like "## What happened", "## Background", "## Why it matters", "## What\'s next" '
+            .'(use only sections the evidence supports), separated by blank lines. Use "- " lines for '
+            .'lists and a "> " line only for a quote that appears verbatim in the evidence. Also return '
+            .'key_points: 3 or 4 short, standalone takeaway sentences.';
     }
 
     /**
@@ -197,6 +204,12 @@ class AiArticleGenerator
                 'generation_method' => 'ai_assisted',
                 'generated_at' => now()->toIso8601String(),
                 'citations' => $data['citations'],
+                'key_points' => collect($data['key_points'] ?? [])
+                    ->filter(fn ($p) => is_string($p) && trim($p) !== '')
+                    ->map(fn ($p) => mb_substr(trim($p), 0, 280))
+                    ->take(4)
+                    ->values()
+                    ->all(),
             ]),
         ]);
 

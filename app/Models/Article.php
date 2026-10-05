@@ -123,6 +123,22 @@ class Article extends Model
     }
 
     /**
+     * The card structure the "Epic Story" reading template renders
+     * (lead, numbered section cards, table of contents, takeaways).
+     * Optional AI/editor-supplied key points live in
+     * editorial_metadata['key_points'].
+     *
+     * @return array<string, mixed>
+     */
+    public function storyLayout(): array
+    {
+        $keyPoints = $this->editorial_metadata['key_points'] ?? null;
+
+        return app(\App\Services\Content\StoryRenderer::class)
+            ->render((string) $this->content, is_array($keyPoints) ? $keyPoints : null);
+    }
+
+    /**
      * content is authored as plain text - the admin editor is a plain
      * textarea (never a rich-text/HTML editor), and AiArticleGenerator
      * only ever produces a plain prose string (see AiArticleGenerator's

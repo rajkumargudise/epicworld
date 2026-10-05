@@ -13,6 +13,7 @@
             <nav class="flex items-center gap-6 text-sm font-medium">
                 <a href="{{ route('admin.dashboard') }}" class="font-semibold">EPIC World</a>
                 <a href="{{ route('admin.dashboard') }}" class="text-slate-600 hover:text-slate-900">Dashboard</a>
+                <a href="{{ route('admin.review.index') }}" class="text-slate-600 hover:text-slate-900">Review</a>
                 <a href="{{ route('admin.stories.index') }}" class="text-slate-600 hover:text-slate-900">Stories</a>
                 <a href="{{ route('admin.feeds.index') }}" class="text-slate-600 hover:text-slate-900">Feeds</a>
                 @if (auth()->user()->isAdmin())

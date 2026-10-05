@@ -27,7 +27,7 @@ class HomeController extends Controller
 
     private const ARTICLES_PER_SECTION = 4;
 
-    private const LATEST_COUNT = 8;
+    private const LATEST_COUNT = 12;
 
     private const BREAKING_COUNT = 5;
 

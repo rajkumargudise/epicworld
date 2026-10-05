@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\ArticleController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FeedController;
+use App\Http\Controllers\Admin\ReviewQueueController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\StoryController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -69,6 +70,9 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/stories', [StoryController::class, 'index'])->name('stories.index');
         Route::get('/stories/{story}', [StoryController::class, 'show'])->name('stories.show');
+
+        Route::get('/review', [ReviewQueueController::class, 'index'])->name('review.index');
+        Route::post('/review/publish', [ReviewQueueController::class, 'publish'])->name('review.publish');
 
         Route::get('/feeds', [FeedController::class, 'index'])->name('feeds.index');
 

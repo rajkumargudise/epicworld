@@ -72,7 +72,8 @@ class ArticleContentSafetyTest extends TestCase
         $response = $this->get(route('article.show', $article));
 
         $response->assertOk();
-        $response->assertSee('<p>First paragraph of the story.</p>', false);
+        // The first paragraph is the styled lead; the rest render as plain <p>.
+        $response->assertSee('>First paragraph of the story.</p>', false);
         $response->assertSee('<p>Second paragraph of the story.</p>', false);
     }
 
