@@ -34,6 +34,13 @@ class StoryRendererTest extends TestCase
         $this->assertSame('Part 1', $r['sections'][0]['title']);
     }
 
+    public function test_short_unpunctuated_lines_in_imported_text_become_headings(): void
+    {
+        $r = $this->render("This is the opening paragraph of an imported post that has real length to it.\n\nChallenges in the Indian Education System\n\nA long paragraph describing the challenges in considerable detail so that it is clearly body text.\n\nThe Role of Technology\n\nAnother long paragraph describing how technology is changing classrooms across the country today.");
+
+        $this->assertSame(['Challenges in the Indian Education System', 'The Role of Technology'], array_column($r['toc'], 'title'));
+    }
+
     public function test_a_short_headingless_body_is_one_untitled_section(): void
     {
         $r = $this->render("Lead paragraph.\n\nOnly one more paragraph.");

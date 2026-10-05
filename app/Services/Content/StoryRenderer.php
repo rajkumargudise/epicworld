@@ -34,7 +34,7 @@ class StoryRenderer
      */
     public function render(string $content, ?array $keyPoints = null): array
     {
-        $blocks = $this->parseBlocks($content);
+        $blocks = $this->promoteImpliedHeadings($this->parseBlocks($content));
 
         $lead = null;
         if (($blocks[0]['type'] ?? null) === 'p') {
@@ -56,6 +56,44 @@ class StoryRenderer
             'takeaways' => $this->takeaways($keyPoints, $sections),
             'word_count' => str_word_count(strip_tags(preg_replace('/[#>*\-\[\]()]/', ' ', $content) ?? '')),
         ];
+    }
+
+    /**
+     * Imported posts (e.g. from WordPress) lose their heading tags and
+     * arrive as plain paragraphs, so a short line with no sentence
+     * punctuation that sits directly before a longer paragraph is
+     * treated as a heading. Only applied when the body has no explicit
+     * "##" headings at all, so authored structure is never second-guessed.
+     *
+     * @param  array<int, array<string, mixed>>  $blocks
+     * @return array<int, array<string, mixed>>
+     */
+    private function promoteImpliedHeadings(array $blocks): array
+    {
+        if (collect($blocks)->contains(fn ($b) => $b['type'] === 'h')) {
+            return $blocks;
+        }
+
+        foreach ($blocks as $i => $block) {
+            if ($i === 0 || $block['type'] !== 'p') {
+                continue;
+            }
+
+            $text = trim($block['text'] ?? '');
+            $next = $blocks[$i + 1] ?? null;
+            $words = str_word_count($text);
+
+            if (
+                $next !== null && $next['type'] === 'p'
+                && mb_strlen($text) <= 90 && $words >= 2 && $words <= 12
+                && ! preg_match('/[.!?:;,]$/u', $text)
+                && mb_strlen(trim($next['text'] ?? '')) > mb_strlen($text) * 2
+            ) {
+                $blocks[$i] = ['type' => 'h', 'text' => $text];
+            }
+        }
+
+        return $blocks;
     }
 
     /**
