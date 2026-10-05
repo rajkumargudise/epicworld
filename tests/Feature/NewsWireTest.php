@@ -107,6 +107,23 @@ class NewsWireTest extends TestCase
         $this->assertSame(1, WireItem::count());
     }
 
+    public function test_with_a_youtube_api_key_video_feeds_use_the_data_api(): void
+    {
+        $this->useFeeds([['scope' => 'world', 'source' => 'DW News', 'kind' => 'video', 'url' => 'https://www.youtube.com/feeds/videos.xml?channel_id=UCknLrEdhRCp1aegoMqRaCZg']]);
+        \App\Models\Setting::write('youtube_api_key', 'yt-test-key');
+        Http::fake(['www.googleapis.com/*' => Http::response(['items' => [
+            ['snippet' => ['title' => 'Real video', 'description' => 'D', 'publishedAt' => now()->subHour()->toIso8601String(), 'resourceId' => ['videoId' => 'abcDEF12345']]],
+            ['snippet' => ['title' => 'Private video', 'publishedAt' => now()->toIso8601String(), 'resourceId' => ['videoId' => 'zzzzzzzzzzz']]],
+        ]])]);
+
+        app(NewsWireFetcher::class)->run();
+
+        $this->assertSame(['abcDEF12345'], WireItem::videos()->pluck('video_id')->all());
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'playlistId=UUknLrEdhRCp1aegoMqRaCZg')
+            && $request->hasHeader('x-goog-api-key', 'yt-test-key')
+            && ! str_contains($request->url(), 'yt-test-key'));
+    }
+
     public function test_old_items_are_pruned(): void
     {
         $this->useFeeds([]);

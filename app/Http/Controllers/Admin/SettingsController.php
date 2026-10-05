@@ -24,6 +24,7 @@ class SettingsController extends Controller
             'openaiModel' => Setting::read('openai_model') ?? config('ai.providers.openai.model'),
             'openaiKeySet' => Setting::read('openai_api_key') !== null || filled(config('ai.providers.openai.api_key')),
             'geminiKeySet' => Setting::read('gemini_api_key') !== null || filled(config('ai.providers.gemini.api_key')),
+            'youtubeKeySet' => Setting::read('youtube_api_key') !== null || filled(config('newswire.youtube_api_key')),
         ]);
     }
 
@@ -38,12 +39,14 @@ class SettingsController extends Controller
             'gemini_api_key' => ['nullable', 'string', 'max:300'],
             'clear_openai_api_key' => ['nullable', 'boolean'],
             'clear_gemini_api_key' => ['nullable', 'boolean'],
+            'youtube_api_key' => ['nullable', 'string', 'max:300'],
+            'clear_youtube_api_key' => ['nullable', 'boolean'],
         ]);
 
         Setting::write('ai_provider', $data['ai_provider']);
         Setting::write('openai_model', $data['openai_model'] ?? null);
 
-        foreach (['openai', 'gemini'] as $name) {
+        foreach (['openai', 'gemini', 'youtube'] as $name) {
             if ($request->boolean("clear_{$name}_api_key")) {
                 Setting::write("{$name}_api_key", null);
             } elseif (filled($data["{$name}_api_key"] ?? null)) {

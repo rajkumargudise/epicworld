@@ -56,6 +56,21 @@
             </label>
         </fieldset>
 
+        <fieldset class="space-y-3 rounded-lg border border-slate-200 bg-white p-5">
+            <legend class="px-1 text-sm font-semibold">YouTube (latest video news)</legend>
+            <p class="text-xs {{ $youtubeKeySet ? 'text-emerald-700' : 'text-slate-500' }}">
+                {{ $youtubeKeySet ? 'An API key is set.' : 'No API key set. Live TV works without one; add a YouTube Data API v3 key to also show each channel\'s latest videos.' }}
+            </p>
+            <div>
+                <label for="youtube_api_key" class="mb-1 block text-sm font-medium">YouTube Data API key</label>
+                <input id="youtube_api_key" name="youtube_api_key" type="password" autocomplete="off" placeholder="{{ $youtubeKeySet ? 'Leave blank to keep the current key' : '' }}"
+                       class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+            </div>
+            <label class="flex items-center gap-2 text-xs text-slate-600">
+                <input type="checkbox" name="clear_youtube_api_key" value="1"> Remove the stored YouTube key
+            </label>
+        </fieldset>
+
         <button type="submit" class="rounded-md bg-slate-900 px-5 py-2 text-sm font-medium text-white hover:bg-slate-700">Save settings</button>
     </form>
 @endsection

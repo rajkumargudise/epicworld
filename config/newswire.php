@@ -29,6 +29,10 @@ return [
 
     'max_items_per_feed' => 25,
 
+    // Optional: YouTube Data API key for the "latest videos" feeds. Can
+    // also be set in Admin > Settings (which takes precedence).
+    'youtube_api_key' => env('YOUTUBE_API_KEY'),
+
     'scopes' => [
         'world' => ['label' => 'World', 'blurb' => 'Breaking and developing stories from around the globe.'],
         'news' => ['label' => 'News', 'blurb' => 'The latest from across India.'],
@@ -50,7 +54,8 @@ return [
         ['scope' => 'news', 'source' => 'The Hindu', 'url' => 'https://www.thehindu.com/news/national/feeder/default.rss'],
         ['scope' => 'news', 'source' => 'NDTV', 'url' => 'https://feeds.feedburner.com/ndtvnews-top-stories'],
         ['scope' => 'news', 'source' => 'Times of India', 'url' => 'https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms'],
-        ['scope' => 'news', 'source' => 'The Indian Express', 'url' => 'https://indianexpress.com/section/india/feed/'],
+        ['scope' => 'news', 'source' => 'Zee News', 'url' => 'https://zeenews.india.com/rss/india-national-news.xml'],
+        ['scope' => 'news', 'source' => 'NDTV India', 'url' => 'https://feeds.feedburner.com/ndtvnews-india-news'],
         ['scope' => 'news', 'source' => 'Hindustan Times', 'url' => 'https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml'],
         ['scope' => 'news', 'source' => 'India Today', 'url' => 'https://www.indiatoday.in/rss/1206514'],
 

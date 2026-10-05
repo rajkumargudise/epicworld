@@ -2,6 +2,7 @@
 
 namespace App\Services\NewsWire;
 
+use App\Models\Setting;
 use App\Models\WireItem;
 use Carbon\Carbon;
 use Illuminate\Http\Client\Pool;
@@ -39,16 +40,27 @@ class NewsWireFetcher
         $feeds = array_values(config('newswire.feeds', []));
         $stats = ['feeds' => count($feeds), 'failed' => 0, 'new_items' => 0, 'pruned' => 0];
 
-        $responses = Http::pool(function (Pool $pool) use ($feeds) {
-            foreach ($feeds as $i => $feed) {
+        // YouTube's public channel-feed endpoint is unreliable; with an API
+        // key (Admin > Settings) video feeds use the Data API's uploads
+        // playlist instead, which costs one quota unit per channel.
+        $youtubeKey = Setting::read('youtube_api_key') ?: config('newswire.youtube_api_key');
+
+        $requests = [];
+        foreach ($feeds as $i => $feed) {
+            $requests[$i] = $this->requestFor($feed, $youtubeKey);
+        }
+
+        $responses = Http::pool(function (Pool $pool) use ($requests) {
+            foreach ($requests as $i => $request) {
                 $pool->as((string) $i)
                     ->timeout(15)
-                    ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; EpicWorldBot/1.0; +https://epicworld.in)'])
-                    ->get($feed['url']);
+                    ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; EpicWorldBot/1.0; +https://epicworld.in)'] + $request['headers'])
+                    ->get($request['url']);
             }
         });
 
         foreach ($feeds as $i => $feed) {
+            $feed['_api'] = $requests[$i]['api'];
             $response = $responses[(string) $i] ?? null;
 
             if (! $response instanceof Response || ! $response->successful()) {
@@ -87,6 +99,10 @@ class NewsWireFetcher
      */
     public function parse(array $feed, string $body): array
     {
+        if (! empty($feed['_api'])) {
+            return $this->parseYoutubeApi($feed, $body);
+        }
+
         $previous = libxml_use_internal_errors(true);
         $xml = simplexml_load_string($body, SimpleXMLElement::class, LIBXML_NOCDATA | LIBXML_NONET);
         libxml_clear_errors();
@@ -136,6 +152,69 @@ class NewsWireFetcher
                 'image_url' => $this->image($entry, $media, $rawSummary.' '.$encoded),
                 'video_id' => $videoId,
                 'published_at' => $this->date($entry),
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * @param  array<string, mixed>  $feed
+     * @return array{url: string, headers: array<string, string>, api: bool}
+     */
+    private function requestFor(array $feed, ?string $youtubeKey): array
+    {
+        if (($feed['kind'] ?? 'article') === 'video' && filled($youtubeKey)
+            && preg_match('/channel_id=(UC[A-Za-z0-9_-]{22})/', $feed['url'], $m)) {
+            return [
+                'url' => 'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=10&playlistId=UU'.substr($m[1], 2),
+                'headers' => ['x-goog-api-key' => $youtubeKey],
+                'api' => true,
+            ];
+        }
+
+        return ['url' => $feed['url'], 'headers' => [], 'api' => false];
+    }
+
+    /**
+     * @param  array<string, mixed>  $feed
+     * @return array<int, array<string, mixed>>
+     */
+    private function parseYoutubeApi(array $feed, string $body): array
+    {
+        $json = json_decode($body, true);
+
+        if (! is_array($json) || ! isset($json['items'])) {
+            throw new \RuntimeException('Unexpected YouTube API response');
+        }
+
+        $items = [];
+
+        foreach ($json['items'] as $row) {
+            $snippet = $row['snippet'] ?? [];
+            $videoId = (string) ($snippet['resourceId']['videoId'] ?? '');
+            $title = $this->text((string) ($snippet['title'] ?? ''));
+
+            if (! preg_match('/^[A-Za-z0-9_-]{11}$/', $videoId) || $title === '' || in_array($title, ['Private video', 'Deleted video'], true)) {
+                continue;
+            }
+
+            try {
+                $published = Carbon::parse((string) ($snippet['publishedAt'] ?? 'now'));
+            } catch (Throwable) {
+                $published = now();
+            }
+
+            $items[] = [
+                'kind' => 'video',
+                'scope' => $feed['scope'],
+                'source' => $feed['source'],
+                'title' => Str::limit($title, 300, '…'),
+                'summary' => $this->summary((string) ($snippet['description'] ?? '')),
+                'url' => 'https://www.youtube.com/watch?v='.$videoId,
+                'image_url' => null,
+                'video_id' => $videoId,
+                'published_at' => $published->isFuture() ? now() : $published,
             ];
         }
 
