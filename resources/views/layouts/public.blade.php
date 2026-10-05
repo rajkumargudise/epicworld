@@ -17,14 +17,14 @@
 
     <header class="sticky top-0 z-40 border-b border-line bg-bg/75 backdrop-blur-xl">
         <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-            <a href="{{ route('home') }}" class="flex items-center gap-2.5 text-lg font-extrabold tracking-tight">
+            <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2.5 whitespace-nowrap text-lg font-extrabold tracking-tight">
                 <span class="grid h-8 w-8 place-items-center rounded-lg text-sm font-black text-white" style="background: linear-gradient(135deg, var(--accent), var(--accent-2))">E</span>
                 <span>EPIC <span class="gradient-text">World</span></span>
             </a>
 
-            <nav class="hidden items-center gap-0.5 text-sm font-medium text-muted lg:flex" aria-label="Primary">
+            <nav class="hidden items-center gap-0.5 whitespace-nowrap text-sm font-medium text-muted lg:flex" aria-label="Primary">
                 <a href="{{ route('latest') }}" class="rounded-full px-3.5 py-1.5 transition hover:text-ink {{ request()->routeIs('latest') ? 'bg-surface-2 text-ink' : '' }}">Latest</a>
-                @foreach (($navCategories ?? collect())->reject(fn ($c) => $c->slug === 'latest')->take(7) as $navCategory)
+                @foreach (($navCategories ?? collect())->reject(fn ($c) => $c->slug === 'latest')->take(5) as $navCategory)
                     <a href="{{ route('category.show', $navCategory) }}"
                        class="rounded-full px-3.5 py-1.5 transition hover:text-ink {{ request()->is('category/'.$navCategory->slug) ? 'bg-surface-2 text-ink' : '' }}">{{ $navCategory->name }}</a>
                 @endforeach
