@@ -107,7 +107,7 @@ class HomeController extends Controller
         return view('public.home', [
             'guides' => $guides,
             'wire' => $wire,
-            'hotStories' => \Illuminate\Support\Facades\Cache::remember('home:hot-stories', 60, fn () => app(HotStories::class)->top(6)),
+            'hotStories' => $this->hotStories(),
             'indiaHeadlines' => WireItem::articles()->where('scope', 'news')->newest()->take(10)->get(),
             'videos' => WireItem::videos()->newest()->take(4)->get(),
             'featured' => $featured,
@@ -130,6 +130,27 @@ class HomeController extends Controller
      * detail. The SearchAction describes the real /search feature
      * that already exists, not a promotional claim.
      */
+    /**
+     * Hot-story clusters, cached for a minute. Only plain ids/strings are cached: the cache
+     * store refuses to unserialize Eloquent models or collections (cache.serializable_classes
+     * is false), so the lead items are re-fetched by id.
+     *
+     * @return \Illuminate\Support\Collection<int, array{lead: WireItem, count: int, sources: array<int, string>}>
+     */
+    private function hotStories(): \Illuminate\Support\Collection
+    {
+        $plain = \Illuminate\Support\Facades\Cache::remember('home:hot-stories:v2', 60, fn () => app(HotStories::class)->top(6)
+            ->map(fn (array $c) => ['lead_id' => $c['lead']->id, 'count' => $c['count'], 'sources' => array_values($c['sources'])])
+            ->all());
+
+        $leads = WireItem::query()->whereIn('id', array_column($plain, 'lead_id'))->get()->keyBy('id');
+
+        return collect($plain)
+            ->filter(fn (array $c) => $leads->has($c['lead_id']))
+            ->map(fn (array $c) => ['lead' => $leads[$c['lead_id']], 'count' => $c['count'], 'sources' => $c['sources']])
+            ->values();
+    }
+
     private function websiteJsonLd(): array
     {
         return [
