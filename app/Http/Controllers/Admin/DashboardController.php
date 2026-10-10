@@ -35,7 +35,17 @@ class DashboardController extends Controller
         $checks = collect(LaunchController::checks($site, $ai))->flatten(1);
         $lastWire = Cache::get(NewsWireFetcher::LAST_RUN_KEY);
 
+        $upcoming = Article::query()->where('status', ArticleStatus::Published)->where('published_at', '>', now())
+            ->orderBy('published_at')->limit(10)->get(['id', 'title', 'slug', 'published_at']);
+        $recent = Article::query()->with('category:id,name')->latest('updated_at')->limit(8)->get(['id', 'title', 'slug', 'status', 'category_id', 'published_at', 'updated_at']);
+
         return view('admin.dashboard', [
+            'upcoming' => $upcoming,
+            'recent' => $recent,
+            'liveCount' => Article::query()->publiclyVisible()->count(),
+            'published7' => Article::query()->publiclyVisible()->where('published_at', '>=', now()->subDays(7))->count(),
+            'commentsTotal' => Comment::query()->count(),
+            'deskHot' => $lastWire !== null,
             'pendingComments' => Comment::query()->where('status', Comment::PENDING)->count(),
             'contributorReview' => Article::query()->where('status', ArticleStatus::Review)->get()->filter(fn (Article $a) => $a->isContributed())->count(),
             'unreadMessages' => ContactMessage::query()->whereNull('read_at')->count(),

@@ -252,3 +252,76 @@
     .js .reveal { opacity: 1; transform: none; transition: none; }
     .card, .btn-primary { transition: none; }
 }
+
+/* ---- Admin shell ----
+ * The admin views were written with light-only utility classes (bg-white, text-slate-*, border-slate-*).
+ * Rather than rewrite every page, those utilities are remapped to the theme tokens inside .admin-shell,
+ * so the whole dashboard follows the dark/light theme and the new design language. */
+:root {
+    --ok: #34d399; --ok-bg: rgba(52, 211, 153, 0.13); --ok-line: rgba(52, 211, 153, 0.35);
+    --warn: #fbbf24; --warn-bg: rgba(251, 191, 36, 0.13); --warn-line: rgba(251, 191, 36, 0.35);
+    --bad: #f87171; --bad-bg: rgba(248, 113, 113, 0.13); --bad-line: rgba(248, 113, 113, 0.35);
+    --info: #a5b4fc; --info-bg: rgba(139, 123, 255, 0.16); --info-line: rgba(139, 123, 255, 0.4);
+}
+:root[data-theme='light'] {
+    --ok: #047857; --ok-bg: #d1fae5; --ok-line: #6ee7b7;
+    --warn: #b45309; --warn-bg: #fef3c7; --warn-line: #fcd34d;
+    --bad: #b91c1c; --bad-bg: #fee2e2; --bad-line: #fca5a5;
+    --info: #4338ca; --info-bg: #e0e7ff; --info-line: #a5b4fc;
+}
+
+.admin-shell { background: var(--bg); color: var(--ink); }
+.admin-shell .bg-white, .admin-shell .bg-slate-50 { background-color: var(--surface); }
+.admin-shell .bg-slate-100, .admin-shell .hover\:bg-slate-50:hover, .admin-shell .hover\:bg-slate-100:hover { background-color: var(--surface-2); }
+.admin-shell .border-slate-200, .admin-shell .border-slate-100, .admin-shell .divide-slate-200 > * + *, .admin-shell .divide-slate-100 > * + * { border-color: var(--line); }
+.admin-shell .border-slate-300, .admin-shell .border-slate-400 { border-color: var(--line-strong); }
+.admin-shell .text-slate-900, .admin-shell .text-slate-800, .admin-shell .text-slate-700 { color: var(--ink); }
+.admin-shell .text-slate-600, .admin-shell .text-slate-500 { color: var(--ink-soft); }
+.admin-shell .text-slate-400 { color: var(--muted); }
+.admin-shell .bg-slate-900, .admin-shell .bg-slate-800, .admin-shell .bg-slate-700, .admin-shell .bg-indigo-600 {
+    background: linear-gradient(100deg, var(--accent), var(--accent-2)); color: #fff;
+}
+.admin-shell .bg-emerald-600 { background: #059669; color: #fff; }
+.admin-shell .bg-amber-600 { background: #d97706; color: #fff; }
+.admin-shell .bg-red-600, .admin-shell .bg-red-700 { background: #dc2626; color: #fff; }
+.admin-shell .bg-emerald-100, .admin-shell .bg-emerald-50 { background-color: var(--ok-bg); }
+.admin-shell .bg-amber-100, .admin-shell .bg-amber-50 { background-color: var(--warn-bg); }
+.admin-shell .bg-red-100, .admin-shell .bg-red-50 { background-color: var(--bad-bg); }
+.admin-shell .bg-indigo-100 { background-color: var(--info-bg); }
+.admin-shell .text-emerald-700, .admin-shell .text-emerald-800 { color: var(--ok); }
+.admin-shell .text-amber-700, .admin-shell .text-amber-800, .admin-shell .text-amber-900 { color: var(--warn); }
+.admin-shell .text-red-600, .admin-shell .text-red-700, .admin-shell .text-red-800 { color: var(--bad); }
+.admin-shell .text-indigo-700, .admin-shell .text-indigo-800 { color: var(--info); }
+.admin-shell .border-emerald-200 { border-color: var(--ok-line); }
+.admin-shell .border-amber-200, .admin-shell .border-amber-300 { border-color: var(--warn-line); }
+.admin-shell .border-red-300 { border-color: var(--bad-line); }
+.admin-shell .border-indigo-300 { border-color: var(--info-line); }
+
+.admin-shell .admin-content :is(input:not([type='checkbox'], [type='radio'], [type='file'], [type='hidden']), select, textarea) {
+    background: var(--surface-2); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 0.6rem; transition: border-color 0.2s, box-shadow 0.2s;
+}
+.admin-shell .admin-content :is(input, select, textarea):focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+.admin-shell .admin-content ::placeholder { color: var(--muted); }
+.admin-shell .admin-content table { width: 100%; }
+.admin-shell .admin-content thead { background: var(--surface-2); color: var(--muted); }
+.admin-shell .admin-content a:not([class]) { color: var(--accent); }
+.admin-shell .admin-content .rounded-lg, .admin-shell .admin-content .rounded-md { border-radius: 0.85rem; }
+
+.admin-nav-link { color: var(--ink-soft); }
+.admin-nav-link:hover { background: var(--surface-2); color: var(--ink); }
+.admin-nav-link.is-active { background: var(--info-bg); color: var(--ink); box-shadow: inset 2px 0 0 var(--accent); }
+.admin-nav-link.is-active svg { color: var(--accent); }
+
+.admin-alert-ok { background: var(--ok-bg); border-color: var(--ok-line); color: var(--ok); }
+.admin-alert-bad { background: var(--bad-bg); border-color: var(--bad-line); color: var(--bad); }
+
+.admin-card { background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; }
+.admin-stat { background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; padding: 1.1rem 1.25rem; transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; }
+a.admin-stat:hover { border-color: var(--line-strong); transform: translateY(-2px); box-shadow: 0 14px 30px -18px var(--glow); }
+.admin-stat.is-hot { border-color: var(--info-line); background: linear-gradient(160deg, var(--info-bg), var(--surface) 70%); }
+.admin-stat.is-warn { border-color: var(--warn-line); }
+.badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.15rem 0.6rem; font-size: 0.72rem; font-weight: 600; }
+.badge-ok { background: var(--ok-bg); color: var(--ok); }
+.badge-warn { background: var(--warn-bg); color: var(--warn); }
+.badge-info { background: var(--info-bg); color: var(--info); }
+.badge-muted { background: var(--surface-2); color: var(--muted); }
