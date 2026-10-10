@@ -55,7 +55,15 @@ class EditorialJobProcessor
             $jobs = EditorialJob::query()
                 ->where('job_type', EditorialJobCreator::JOB_TYPE_ARTICLE_GENERATION)
                 ->where('status', EditorialJobStatus::Pending)
-                ->orderBy('id')
+                ->when(config('editorial.priority_source_slugs'), function ($query, array $slugs) {
+                    $marks = implode(',', array_fill(0, count($slugs), '?'));
+
+                    $query->orderByRaw(
+                        "(exists (select 1 from source_story ss join sources s on s.id = ss.source_id where ss.story_id = editorial_jobs.story_id and s.slug in ({$marks}))) desc",
+                        array_values($slugs),
+                    );
+                })
+                ->orderByDesc('id')
                 ->limit($limit)
                 ->get();
 

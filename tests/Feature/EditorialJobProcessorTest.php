@@ -60,8 +60,8 @@ class EditorialJobProcessorTest extends TestCase
 
     public function test_a_rate_limited_provider_leaves_jobs_pending_and_stops_the_batch(): void
     {
+        [, $second] = $this->pendingJobWithEvidence(); // newest is processed first
         [, $first] = $this->pendingJobWithEvidence();
-        [, $second] = $this->pendingJobWithEvidence();
         app(FakeAiProvider::class)->push(
             AiResult::failure(AiResultStatus::RateLimited, 'fake', null, 'quota exceeded'),
         );
@@ -81,8 +81,8 @@ class EditorialJobProcessorTest extends TestCase
 
     public function test_one_failing_job_does_not_stop_processing_for_the_others(): void
     {
+        [, $goodJob] = $this->pendingJobWithEvidence(); // newest is processed second
         [, $badJob] = $this->pendingJobWithEvidence();
-        [, $goodJob] = $this->pendingJobWithEvidence();
         app(FakeAiProvider::class)->push(
             AiResult::failure(AiResultStatus::ProviderError, 'fake', null, 'Simulated provider outage.'),
         );

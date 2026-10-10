@@ -47,6 +47,12 @@ return [
     */
     'daily_article_cap' => (int) env('EDITORIAL_DAILY_ARTICLE_CAP', 24),
 
+    /*
+    | Stories first reported by these sources are written first (India focus),
+    | newest first within each group.
+    */
+    'priority_source_slugs' => ['the-hindu', 'ndtv', 'times-of-india'],
+
     'schedule' => [
         'enabled' => (bool) env('EDITORIAL_SCHEDULE_ENABLED', true),
         'frequency_minutes' => (int) env('EDITORIAL_SCHEDULE_FREQUENCY_MINUTES', 10),

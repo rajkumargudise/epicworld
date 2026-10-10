@@ -235,7 +235,7 @@
 #story-toc a.is-active span:first-child { color: var(--accent-2); }
 
 /* Live wire ticker */
-.ticker-track { display: flex; width: max-content; animation: ticker 60s linear infinite; }
+.ticker-track { display: flex; width: max-content; animation: ticker var(--ticker-duration, 140s) linear infinite; }
 .ticker:hover .ticker-track { animation-play-state: paused; }
 @keyframes ticker { to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) { .ticker-track { animation: none; } }

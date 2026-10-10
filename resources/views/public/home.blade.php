@@ -8,7 +8,9 @@
     $moreLatest = $others->slice(4)->values();
     $scopeMeta = config('newswire.scopes');
     $hasWire = collect($wire)->flatten()->isNotEmpty();
-    $tickerItems = collect($wire)->flatten()->sortByDesc('published_at')->take(14);
+    // India first, then a few world headlines - the ticker is India-led.
+    $tickerItems = collect($wire['news'] ?? [])->take(10)->merge(collect($wire['world'] ?? [])->take(4))->unique('id')->values();
+    $tickerSeconds = max(60, $tickerItems->count() * 11);
 @endphp
 
 @section('content')
@@ -20,7 +22,7 @@
         <span class="hidden shrink-0 text-xs text-muted sm:inline">{{ now()->format('l, j F Y') }}</span>
         @if ($tickerItems->isNotEmpty())
             <div class="ticker relative min-w-0 flex-1 overflow-hidden">
-                <div class="ticker-track gap-10">
+                <div class="ticker-track gap-10" style="--ticker-duration: {{ $tickerSeconds }}s">
                     @foreach ([1, 2] as $copy)
                         <div class="flex shrink-0 gap-10 pr-10" @if ($copy === 2) aria-hidden="true" @endif>
                             @foreach ($tickerItems as $item)
@@ -35,7 +37,47 @@
         @endif
     </div>
 
-    {{-- LIVE NEWS: World / News / Local --}}
+    {{-- INDIA NOW: hot stories + top India headlines --}}
+    @if ($hotStories->isNotEmpty() || $indiaHeadlines->isNotEmpty())
+        <section class="mb-14" aria-labelledby="india-now">
+            <div class="mb-5 flex items-end justify-between">
+                <h2 id="india-now" class="flex items-center gap-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
+                    <span class="h-7 w-1.5 rounded-full" style="background: linear-gradient(#ff9933, #138808)"></span> India now
+                </h2>
+                <a href="{{ route('live.scope', 'news') }}" class="inline-flex min-h-[44px] items-center text-sm font-semibold text-accent hover:underline">All India news &rarr;</a>
+            </div>
+            <div class="grid gap-5 lg:grid-cols-12">
+                <div class="lg:col-span-7">
+                    <h3 class="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted"><span aria-hidden="true">🔥</span> Hot stories &mdash; covered by several outlets</h3>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        @foreach ($hotStories as $hot)
+                            <article class="card group relative flex flex-col gap-2 rounded-2xl p-5">
+                                <div class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider">
+                                    <span class="rounded-full bg-orange-500/15 px-2 py-0.5 text-orange-400">{{ $hot['count'] }} outlets</span>
+                                    <time class="text-muted" datetime="{{ $hot['lead']->published_at->toIso8601String() }}">{{ $hot['lead']->published_at->diffForHumans() }}</time>
+                                </div>
+                                <h4 class="text-[1.02rem] font-bold leading-snug tracking-tight">
+                                    <a href="{{ $hot['lead']->path() }}" class="after:absolute after:inset-0 group-hover:text-accent">{{ $hot['lead']->title }}</a>
+                                </h4>
+                                <p class="mt-auto text-xs text-muted">{{ collect($hot['sources'])->take(4)->implode(' · ') }}</p>
+                            </article>
+                        @endforeach
+                        @if ($hotStories->isEmpty())
+                            <p class="rounded-2xl border border-dashed border-line-strong bg-surface p-6 text-sm text-muted sm:col-span-2">Hot stories appear here when several newsrooms report the same development.</p>
+                        @endif
+                    </div>
+                </div>
+                <aside class="card rounded-3xl p-3 lg:col-span-5">
+                    <h3 class="px-3 pb-1 pt-2 text-xs font-bold uppercase tracking-wider text-muted">Top India headlines</h3>
+                    <div class="divide-y divide-line" data-live-poll="{{ route('live.feed', ['scope' => 'news', 'variant' => 'list']) }}">
+                        @include('live._list', ['items' => $indiaHeadlines])
+                    </div>
+                </aside>
+            </div>
+        </section>
+    @endif
+
+    {{-- LIVE NEWS: India / World / Local --}}
     <section class="mb-14" data-tabs>
         <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
             <h1 class="flex items-center gap-3 text-3xl font-extrabold tracking-tight sm:text-4xl">

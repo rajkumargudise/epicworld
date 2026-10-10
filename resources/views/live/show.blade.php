@@ -42,6 +42,17 @@
             </div>
         @endif
 
+        @can('access-admin')
+            @if ($item->kind === 'article')
+                <form method="POST" action="{{ route('admin.wire.write', $item) }}" class="story-card mt-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl p-5"
+                      onsubmit="this.querySelector('button').disabled = true; this.querySelector('button').textContent = 'Writing… about a minute';">
+                    @csrf
+                    <p class="text-sm text-ink-soft">Editor tool: turn this headline into a full original article (saved as a draft for review).</p>
+                    <button class="btn-primary rounded-full px-5 py-2.5 text-sm font-semibold">Write full article</button>
+                </form>
+            @endif
+        @endcan
+
         <div class="story-card mt-6 flex flex-wrap items-center justify-between gap-4 rounded-3xl p-6">
             <div class="min-w-0">
                 <p class="text-xs font-bold uppercase tracking-wider text-muted">Reported by</p>

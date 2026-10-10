@@ -121,6 +121,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/blog-writer', [BlogWriterController::class, 'create'])->name('blog-writer.create');
         Route::post('/blog-writer', [BlogWriterController::class, 'store'])->name('blog-writer.store');
         Route::post('/articles/{article}/image', [BlogWriterController::class, 'image'])->name('articles.image');
+        Route::post('/wire/{item}/write', [BlogWriterController::class, 'fromWire'])->whereNumber('item')->name('wire.write');
 
         Route::get('/review', [ReviewQueueController::class, 'index'])->name('review.index');
         Route::post('/review/publish', [ReviewQueueController::class, 'publish'])->name('review.publish');

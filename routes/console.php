@@ -46,8 +46,10 @@ if (config('discovery.schedule.enabled')) {
  * immediately; there is no AI or approval step for the wire.
  */
 if (config('newswire.enabled')) {
+    $wireMinutes = max(1, min(59, (int) config('newswire.fetch_every_minutes', 1)));
+
     Schedule::command(\App\Console\Commands\FetchNewsWire::class)
-        ->everyFiveMinutes()
+        ->cron($wireMinutes === 1 ? '* * * * *' : "*/{$wireMinutes} * * * *")
         ->withoutOverlapping(10)
         ->onFailure(fn () => Log::error('Scheduled newswire fetch reported failure.'));
 }

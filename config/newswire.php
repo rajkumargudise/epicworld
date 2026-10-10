@@ -23,7 +23,10 @@ return [
     // A visitor request triggers a refresh (after the response is sent)
     // when the last one is older than this - a fallback for hosts where
     // the scheduler cron isn't running yet.
-    'stale_after_minutes' => (int) env('NEWSWIRE_STALE_MINUTES', 5),
+    'stale_after_minutes' => (int) env('NEWSWIRE_STALE_MINUTES', 2),
+
+    // How often the scheduler pulls every feed (1-59 minutes).
+    'fetch_every_minutes' => (int) env('NEWSWIRE_FETCH_MINUTES', 1),
 
     'retention_days' => (int) env('NEWSWIRE_RETENTION_DAYS', 5),
 
@@ -34,8 +37,8 @@ return [
     'youtube_api_key' => env('YOUTUBE_API_KEY'),
 
     'scopes' => [
+        'news' => ['label' => 'India', 'blurb' => 'What is happening across India, as it happens.'],
         'world' => ['label' => 'World', 'blurb' => 'Breaking and developing stories from around the globe.'],
-        'news' => ['label' => 'News', 'blurb' => 'The latest from across India.'],
         'local' => ['label' => 'Local', 'blurb' => 'Hyderabad & Telangana, as it happens.'],
     ],
 

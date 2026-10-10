@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Models\Category;
 use App\Models\WireItem;
+use App\Services\NewsWire\HotStories;
 use App\Services\NewsWire\NewsWireFetcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -98,6 +99,8 @@ class HomeController extends Controller
 
         return view('public.home', [
             'wire' => $wire,
+            'hotStories' => \Illuminate\Support\Facades\Cache::remember('home:hot-stories', 60, fn () => app(HotStories::class)->top(6)),
+            'indiaHeadlines' => WireItem::articles()->where('scope', 'news')->newest()->take(10)->get(),
             'videos' => WireItem::videos()->newest()->take(4)->get(),
             'featured' => $featured,
             'latest' => $latest,
