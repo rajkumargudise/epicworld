@@ -225,6 +225,12 @@ class AiArticleGenerator
         $unsupported = [];
 
         foreach ($citations as $citation) {
+            // Models sometimes return {"text": "..."} / {"quote": "..."} instead of a plain string.
+            if (is_array($citation)) {
+                $citation = $citation['text'] ?? $citation['quote'] ?? $citation['evidence'] ?? $citation['claim']
+                    ?? (collect($citation)->first(fn ($v) => is_string($v) && trim($v) !== '') ?? null);
+            }
+
             if (! is_string($citation) || ! $factSheet->supportsLoosely($citation)) {
                 $unsupported[] = is_string($citation) ? $citation : '(non-string citation)';
             }
