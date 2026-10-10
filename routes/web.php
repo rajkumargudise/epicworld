@@ -51,13 +51,9 @@ use Illuminate\Support\Facades\Route;
  * binding is still named deliberately to make that non-collision
  * obvious rather than accidental.
  */
-Route::bind('publicArticle', function (string $slug) {
-    return Article::publiclyVisible()->where('slug', $slug)->firstOrFail();
-});
-
-Route::bind('category', function (string $slug) {
-    return Category::active()->where('slug', $slug)->firstOrFail();
-});
+// The bindings themselves live in AppServiceProvider::boot(): bindings declared in
+// this file are silently skipped once routes are cached (route:cache), which would
+// expose drafts and scheduled posts by direct URL.
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/robots.txt', [RobotsController::class, 'index'])->name('robots');

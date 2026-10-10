@@ -54,7 +54,7 @@ return [
             // Used only when the main model returns an overload (HTTP 5xx) error.
             'fallback_model' => env('GEMINI_FALLBACK_MODEL', 'gemini-flash-lite-latest'),
             'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta'),
-            'timeout' => env('GEMINI_TIMEOUT_SECONDS', 90),
+            'timeout' => env('GEMINI_TIMEOUT_SECONDS', 240),
         ],
 
         'openai' => [
@@ -62,7 +62,7 @@ return [
             'api_key' => env('OPENAI_API_KEY'),
             'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
             'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
-            'timeout' => env('OPENAI_TIMEOUT_SECONDS', 90),
+            'timeout' => env('OPENAI_TIMEOUT_SECONDS', 240),
         ],
 
         'fake' => [

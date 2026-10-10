@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Article;
 use App\Models\Category;
 use App\Models\Tag;
+use Illuminate\Support\Facades\Route;
 use App\Models\User;
 use App\Support\SiteSettings;
 use Illuminate\Support\Facades\Gate;
@@ -49,6 +51,11 @@ class AppServiceProvider extends ServiceProvider
         // a no-op for SQLite (tests), which doesn't enforce a varchar
         // length limit either way.
         Schema::defaultStringLength(191);
+
+        // Public route-model bindings (see the note in routes/web.php). Registered here
+        // rather than in the routes file so they survive `route:cache`.
+        Route::bind('publicArticle', fn (string $slug) => Article::publiclyVisible()->where('slug', $slug)->firstOrFail());
+        Route::bind('category', fn (string $slug) => Category::active()->where('slug', $slug)->firstOrFail());
 
         // The public layout's taxonomy nav and footer tag list are
         // shared here rather than fetched in every public controller -
