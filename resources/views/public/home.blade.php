@@ -47,9 +47,9 @@
                 <a href="{{ route('live.scope', 'news') }}" class="inline-flex min-h-[44px] items-center text-sm font-semibold text-accent hover:underline">All India news &rarr;</a>
             </div>
             <div class="grid gap-5 lg:grid-cols-12">
-                <div class="lg:col-span-7">
+                <div class="flex flex-col lg:col-span-7">
                     <h3 class="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted"><span aria-hidden="true">🔥</span> Hot stories &mdash; covered by several outlets</h3>
-                    <div class="grid gap-4 sm:grid-cols-2">
+                    <div class="grid flex-1 auto-rows-fr gap-4 sm:grid-cols-2">
                         @foreach ($hotStories as $hot)
                             <article class="card group relative flex flex-col gap-2 rounded-2xl p-5">
                                 <div class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider">
@@ -69,8 +69,8 @@
                 </div>
                 <aside class="card rounded-3xl p-3 lg:col-span-5">
                     <h3 class="px-3 pb-1 pt-2 text-xs font-bold uppercase tracking-wider text-muted">Top India headlines</h3>
-                    <div class="divide-y divide-line" data-live-poll="{{ route('live.feed', ['scope' => 'news', 'variant' => 'list']) }}">
-                        @include('live._list', ['items' => $indiaHeadlines])
+                    <div class="divide-y divide-line" data-live-poll="{{ route('live.feed', ['scope' => 'news', 'variant' => 'compact']) }}">
+                        @include('live._list', ['items' => $indiaHeadlines, 'summary' => false])
                     </div>
                 </aside>
             </div>

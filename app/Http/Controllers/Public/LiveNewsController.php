@@ -74,12 +74,12 @@ class LiveNewsController extends Controller
 
         $this->refreshIfStale();
 
-        $variant = request()->query('variant') === 'panel' ? 'panel' : 'list';
-        $limit = $variant === 'panel' ? 8 : 12;
+        $variant = in_array(request()->query('variant'), ['panel', 'compact'], true) ? request()->query('variant') : 'list';
+        $limit = match ($variant) { 'panel' => 8, 'compact' => 6, default => 12 };
 
         $items = WireItem::articles()->where('scope', $scope)->newest()->take($limit)->get();
 
-        return response(view('live._'.$variant, ['items' => $items, 'scope' => $scope])->render())
+        return response(view('live.'.($variant === 'compact' ? '_list' : '_'.$variant), ['items' => $items, 'scope' => $scope, 'summary' => $variant !== 'compact'])->render())
             ->header('Cache-Control', 'public, max-age=30')
             ->header('X-Robots-Tag', 'noindex');
     }

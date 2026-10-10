@@ -104,11 +104,21 @@ class HomeController extends Controller
             ->take(4)
             ->get();
 
+        if ($guides->count() < 4) {
+            $guides = $guides->concat(
+                Article::publiclyVisible()->with(['category', 'author'])
+                    ->whereNotIn('id', $guides->pluck('id'))
+                    ->orderByDesc('published_at')
+                    ->take(4 - $guides->count())
+                    ->get()
+            );
+        }
+
         return view('public.home', [
             'guides' => $guides,
             'wire' => $wire,
             'hotStories' => $this->hotStories(),
-            'indiaHeadlines' => WireItem::articles()->where('scope', 'news')->newest()->take(10)->get(),
+            'indiaHeadlines' => WireItem::articles()->where('scope', 'news')->newest()->take(6)->get(),
             'videos' => WireItem::videos()->newest()->take(4)->get(),
             'featured' => $featured,
             'latest' => $latest,
