@@ -2,7 +2,7 @@
 <article class="card reveal group flex flex-col overflow-hidden rounded-2xl">
     <a href="{{ route('article.show', $article) }}" class="block overflow-hidden" tabindex="-1" aria-hidden="true">
         @if ($article->featured_image)
-            <img src="{{ $article->featured_image }}" alt="" loading="lazy" class="aspect-[16/10] w-full object-cover transition duration-500 group-hover:scale-105">
+            <img src="{{ $article->featured_image }}" alt="" loading="lazy" decoding="async" class="aspect-[16/10] w-full object-cover transition duration-500 group-hover:scale-105">
         @else
             <div class="placeholder-art aspect-[16/10] w-full"></div>
         @endif

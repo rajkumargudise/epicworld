@@ -97,7 +97,7 @@
         <article class="order-1 min-w-0 lg:order-2">
             @if ($article->featured_image)
                 <figure class="mb-8">
-                    <img src="{{ $article->featured_image }}" alt="{{ $article->title }}" referrerpolicy="no-referrer" class="w-full rounded-3xl border border-line object-cover">
+                    <img src="{{ $article->featured_image }}" alt="{{ $article->title }}" fetchpriority="high" decoding="async" referrerpolicy="no-referrer" class="w-full rounded-3xl border border-line object-cover">
                     @if ($imageCredit)
                         <figcaption class="mt-2 text-xs text-muted">
                             @if (! empty($imageCredit['url']))
@@ -173,6 +173,18 @@
                             @endforeach
                         </div>
                     </section>
+
+                    {{-- Internal links: after the second section, point readers at related reading. --}}
+                    @if ($loop->iteration === 2 && $relatedArticles->isNotEmpty())
+                        <aside class="rounded-3xl border border-line bg-surface-2 p-5 sm:p-6" aria-label="Also read">
+                            <p class="mb-3 text-xs font-bold uppercase tracking-wider text-accent">Also read</p>
+                            <ul class="space-y-2">
+                                @foreach ($relatedArticles->take(2) as $also)
+                                    <li><a href="{{ route('article.show', $also) }}" class="font-semibold leading-snug text-ink hover:text-accent">{{ $also->title }} <span aria-hidden="true">&rarr;</span></a></li>
+                                @endforeach
+                            </ul>
+                        </aside>
+                    @endif
                 @endforeach
             </div>
 
@@ -210,6 +222,8 @@
                     </ul>
                 </section>
             @endif
+
+            <div class="mt-8">@include('partials.newsletter', ['source' => 'article'])</div>
 
             @include('partials.comments')
         </article>

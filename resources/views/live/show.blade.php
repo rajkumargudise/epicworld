@@ -32,7 +32,7 @@
                 </div>
             </div>
         @elseif ($item->image_url)
-            <img src="{{ $item->image_url }}" alt="" referrerpolicy="no-referrer" class="mt-8 w-full rounded-3xl border border-line object-cover">
+            <img src="{{ $item->image_url }}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" class="mt-8 w-full rounded-3xl border border-line object-cover">
         @endif
 
         @if ($item->summary)

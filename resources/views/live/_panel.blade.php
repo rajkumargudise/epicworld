@@ -5,9 +5,9 @@
 @endphp
 @if ($lead)
     <div class="grid gap-5 lg:grid-cols-12">
-        <article class="card group relative isolate flex min-h-[22rem] overflow-hidden rounded-3xl lg:col-span-7">
+        <article class="card group relative isolate flex min-h-[17rem] overflow-hidden rounded-3xl lg:col-span-7">
             @if ($lead->image_url)
-                <img src="{{ $lead->image_url }}" alt="" referrerpolicy="no-referrer" class="absolute inset-0 -z-10 h-full w-full object-cover transition duration-700 group-hover:scale-105">
+                <img src="{{ $lead->image_url }}" alt="" decoding="async" referrerpolicy="no-referrer" class="absolute inset-0 -z-10 h-full w-full object-cover transition duration-700 group-hover:scale-105">
             @else
                 <div class="placeholder-art absolute inset-0 -z-10"></div>
             @endif

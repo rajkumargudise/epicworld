@@ -97,7 +97,15 @@ class HomeController extends Controller
             dispatch(fn () => app(NewsWireFetcher::class)->run())->afterResponse();
         }
 
+        $guides = Article::publiclyVisible()
+            ->with(['category', 'author'])
+            ->where('editorial_metadata->source', 'ai_blog')
+            ->orderByDesc('published_at')
+            ->take(4)
+            ->get();
+
         return view('public.home', [
+            'guides' => $guides,
             'wire' => $wire,
             'hotStories' => \Illuminate\Support\Facades\Cache::remember('home:hot-stories', 60, fn () => app(HotStories::class)->top(6)),
             'indiaHeadlines' => WireItem::articles()->where('scope', 'news')->newest()->take(10)->get(),

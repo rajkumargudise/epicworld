@@ -39,8 +39,8 @@
 
     {{-- INDIA NOW: hot stories + top India headlines --}}
     @if ($hotStories->isNotEmpty() || $indiaHeadlines->isNotEmpty())
-        <section class="mb-14" aria-labelledby="india-now">
-            <div class="mb-5 flex items-end justify-between">
+        <section class="mb-9" aria-labelledby="india-now">
+            <div class="mb-4 flex items-end justify-between">
                 <h2 id="india-now" class="flex items-center gap-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
                     <span class="h-7 w-1.5 rounded-full" style="background: linear-gradient(#ff9933, #138808)"></span> India now
                 </h2>
@@ -77,8 +77,25 @@
         </section>
     @endif
 
+    {{-- FEATURED GUIDES: the long, in-depth reads --}}
+    @if ($guides->isNotEmpty())
+        <section class="mb-9" aria-labelledby="guides-h">
+            <div class="mb-4 flex items-end justify-between">
+                <h2 id="guides-h" class="flex items-center gap-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
+                    <span class="h-7 w-1.5 rounded-full" style="background: linear-gradient(var(--accent), var(--accent-2))"></span> Featured guides
+                </h2>
+                <a href="{{ route('latest') }}" class="inline-flex min-h-[44px] items-center text-sm font-semibold text-accent hover:underline">More guides &rarr;</a>
+            </div>
+            <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                @foreach ($guides as $guide)
+                    @include('partials.article-card', ['article' => $guide])
+                @endforeach
+            </div>
+        </section>
+    @endif
+
     {{-- LIVE NEWS: India / World / Local --}}
-    <section class="mb-14" data-tabs>
+    <section class="mb-9" data-tabs>
         <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
             <h1 class="flex items-center gap-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
                 <span class="h-8 w-1.5 rounded-full bg-red-500"></span> Live news
@@ -102,8 +119,8 @@
     </section>
 
     {{-- LIVE TV & VIDEO --}}
-    <section class="mb-14">
-        <div class="mb-5 flex items-end justify-between">
+    <section class="mb-9">
+        <div class="mb-4 flex items-end justify-between">
             <h2 class="flex items-center gap-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
                 <span class="h-7 w-1.5 rounded-full bg-red-500"></span> Live TV &amp; video
             </h2>
@@ -122,14 +139,14 @@
 
     {{-- EPIC World's own reporting --}}
     @if ($lead)
-        <div class="mb-6 flex items-end justify-between">
+        <div class="mb-4 flex items-end justify-between">
             <h2 class="flex items-center gap-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
                 <span class="h-7 w-1.5 rounded-full" style="background: linear-gradient(var(--accent), var(--accent-2))"></span> Stories &amp; explainers
             </h2>
             <a href="{{ route('latest') }}" class="inline-flex min-h-[44px] items-center text-sm font-semibold text-accent hover:underline">All stories &rarr;</a>
         </div>
 
-        <section class="mb-10 grid gap-5 lg:grid-cols-12">
+        <section class="mb-8 grid gap-5 lg:grid-cols-12">
             <div class="reveal lg:col-span-7">
                 @include('partials.story-overlay', ['article' => $lead, 'tall' => true])
             </div>
@@ -148,7 +165,7 @@
     @endif
 
     @if (($navCategories ?? collect())->isNotEmpty())
-        <nav class="mb-12 flex gap-2 overflow-x-auto pb-1" aria-label="Browse topics">
+        <nav class="mb-8 flex gap-2 overflow-x-auto pb-1" aria-label="Browse topics">
             @foreach ($navCategories->reject(fn ($c) => $c->slug === 'latest') as $chipCategory)
                 <a href="{{ route('category.show', $chipCategory) }}" class="chip shrink-0 rounded-full px-4 py-3 text-sm font-medium">{{ $chipCategory->name }}</a>
             @endforeach
@@ -156,8 +173,8 @@
     @endif
 
     @if ($moreLatest->isNotEmpty())
-        <section class="mb-16">
-            <div class="mb-6 flex items-end justify-between">
+        <section class="mb-9">
+            <div class="mb-4 flex items-end justify-between">
                 <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">Fresh from the newsroom</h2>
                 <a href="{{ route('latest') }}" class="inline-flex min-h-[44px] items-center text-sm font-semibold text-accent hover:underline">View all &rarr;</a>
             </div>
@@ -169,13 +186,15 @@
         </section>
     @endif
 
+    <div class="mb-9">@include('partials.newsletter', ['source' => 'home'])</div>
+
     <x-ad-slot name="home_between_sections" :context="$context" />
 
     @foreach ($categorySections as $section)
         @php($sectionArticles = $section['articles']->values())
         @continue($sectionArticles->isEmpty())
-        <section class="mb-16">
-            <div class="mb-6 flex items-end justify-between">
+        <section class="mb-9">
+            <div class="mb-4 flex items-end justify-between">
                 <h2 class="flex items-center gap-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
                     <span class="h-7 w-1.5 rounded-full" style="background: linear-gradient(var(--accent), var(--accent-2))"></span>
                     {{ $section['category']->name }}

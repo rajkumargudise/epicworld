@@ -1,7 +1,7 @@
 {{-- Big image-led story card. Expects $article; optional $tall (bool). --}}
-<article class="card group relative isolate flex overflow-hidden rounded-3xl {{ ($tall ?? false) ? 'min-h-[26rem] lg:min-h-full' : 'min-h-[18rem]' }}">
+<article class="card group relative isolate flex overflow-hidden rounded-3xl {{ ($tall ?? false) ? 'min-h-[20rem] lg:min-h-full' : 'min-h-[15rem]' }}">
     @if ($article->featured_image)
-        <img src="{{ $article->featured_image }}" alt="" class="absolute inset-0 -z-10 h-full w-full object-cover transition duration-700 group-hover:scale-105">
+        <img src="{{ $article->featured_image }}" alt="" loading="lazy" decoding="async" class="absolute inset-0 -z-10 h-full w-full object-cover transition duration-700 group-hover:scale-105">
     @else
         <div class="placeholder-art absolute inset-0 -z-10"></div>
     @endif

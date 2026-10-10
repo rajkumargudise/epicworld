@@ -44,6 +44,7 @@ class DashboardController extends Controller
             'recent' => $recent,
             'liveCount' => Article::query()->publiclyVisible()->count(),
             'published7' => Article::query()->publiclyVisible()->where('published_at', '>=', now()->subDays(7))->count(),
+            'subscriberCount' => \App\Models\Subscriber::query()->count(),
             'commentsTotal' => Comment::query()->count(),
             'deskHot' => $lastWire !== null,
             'pendingComments' => Comment::query()->where('status', Comment::PENDING)->count(),

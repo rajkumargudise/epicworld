@@ -66,6 +66,7 @@ Route::get('/about', [PageController::class, 'show'])->defaults('page', 'about')
 Route::get('/editorial-policy', [PageController::class, 'show'])->defaults('page', 'editorial-policy')->name('editorial.policy');
 Route::get('/terms', [PageController::class, 'show'])->defaults('page', 'terms')->name('terms');
 Route::get('/write-for-us', [PageController::class, 'show'])->defaults('page', 'write-for-us')->name('write');
+Route::post('/subscribe', [\App\Http\Controllers\Public\SubscribeController::class, 'store'])->middleware('throttle:contact')->name('subscribe.store');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::post('/contact', [PageController::class, 'sendContact'])->middleware('throttle:contact')->name('contact.send');
 

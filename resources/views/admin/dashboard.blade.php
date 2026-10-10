@@ -150,6 +150,7 @@
                 <div class="flex items-center justify-between px-5 py-3.5"><span class="text-ink-soft">Live wire</span><span class="badge {{ $wireLastRun && $wireLastRun->gt(now()->subMinutes(5)) ? 'badge-ok' : 'badge-warn' }}">{{ $wireLastRun ? $wireLastRun->diffForHumans() : 'Never' }}</span></div>
                 <div class="flex items-center justify-between px-5 py-3.5"><span class="text-ink-soft">Stories queued for AI</span><span class="font-semibold text-ink">{{ $pendingJobs }}</span></div>
                 <a href="{{ route('admin.users.index') }}" class="flex items-center justify-between px-5 py-3.5 transition hover:bg-surface-2"><span class="text-ink-soft">Users</span><span class="font-semibold text-ink">{{ $userCount }} <span class="font-normal text-muted">({{ $contributorCount }} contributors)</span></span></a>
+                <div class="flex items-center justify-between px-5 py-3.5"><span class="text-ink-soft">Newsletter subscribers</span><span class="font-semibold text-ink">{{ $subscriberCount }}</span></div>
                 <div class="flex items-center justify-between px-5 py-3.5"><span class="text-ink-soft">Comments (all)</span><span class="font-semibold text-ink">{{ $commentsTotal }}</span></div>
             </div>
         </section>
