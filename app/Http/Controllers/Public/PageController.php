@@ -19,6 +19,7 @@ class PageController extends Controller
         'editorial-policy' => ['Editorial policy', 'How EPIC World sources, writes, reviews and corrects its stories, including how AI is used.'],
         'terms' => ['Terms of use', 'The terms for using EPIC World, submitting posts and commenting.'],
         'write-for-us' => ['Write for EPIC World', 'Guidelines for contributing a post to EPIC World.'],
+        'disclaimer' => ['Disclaimer', 'Important limits on the health, financial and live news information published on EPIC World.'],
     ];
 
     public function show(string $page): View

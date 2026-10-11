@@ -34,6 +34,9 @@
                         <span class="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-accent">Community contributor</span>
                     @endif
                     <span aria-hidden="true">&middot;</span>
+                @else
+                    <a href="{{ route('editorial.policy') }}" class="font-semibold text-ink hover:text-accent">EPIC World Editorial Team</a>
+                    <span aria-hidden="true">&middot;</span>
                 @endif
                 @if ($article->published_at)
                     <time datetime="{{ $article->published_at->toIso8601String() }}">{{ $article->published_at->format('M j, Y') }}</time>

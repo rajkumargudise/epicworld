@@ -17,7 +17,7 @@
             </ul>
 
             <h2>How we work</h2>
-            <p>We separate what we report from what we link to. Live-desk items are short headline briefs that credit and link to the original publisher. Our own stories are written from the facts in that reporting, in our own words, reviewed by a person before publication, and credited to their sources. Read the full <a href="{{ route('editorial.policy') }}">editorial policy</a>, including how we use AI tools and how to request a correction.</p>
+            <p>We separate what we report from what we link to. Live-desk items credit the original publisher, and many carry a full EPIC World report written in our own words from that publisher's reporting. Our guides and explainers are written from the facts in that reporting, in our own words, reviewed by a person before publication, and credited to their sources. Read the full <a href="{{ route('editorial.policy') }}">editorial policy</a>, including how we use AI tools and how to request a correction.</p>
 
             <h2>Get involved</h2>
             <p>Have a story or an opinion? <a href="{{ route('write') }}">Write for us</a>. Spotted a mistake or want to say hello? <a href="{{ route('contact') }}">Contact the team</a>.</p>

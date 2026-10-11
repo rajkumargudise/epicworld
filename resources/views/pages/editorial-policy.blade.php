@@ -10,11 +10,12 @@
             <h2>Accuracy and sourcing</h2>
             <p>Our stories are built from named, published sources, which are listed at the end of each article. We do not invent quotes, figures or events. When reporting is thin we say less rather than guess, and we update stories when new facts emerge.</p>
 
-            <h2>Live desk headlines</h2>
-            <p>The live desk shows headlines, short summaries and video from established news organisations, each clearly credited and linked to its publisher. We do not present this material as our own reporting and we do not republish publishers' full articles.</p>
+            <h2>Live desk</h2>
+            <p>The live desk collects headlines and video from established news organisations, each credited to its publisher. For many headlines EPIC World also writes a full report in its own words, based on that publisher's reporting and on what other outlets have reported about the same development. We name the outlets on every report, we do not copy their articles, and an automated check rejects any draft that reuses long passages of the original wording.</p>
+            <p>Live reports are written with AI and published quickly, so they are not individually reviewed by an editor before they appear. Details can change as a story develops, and our <a href="{{ route('disclaimer') }}">disclaimer</a> says so plainly. Where a live report is wrong, tell us and we will correct or remove it.</p>
 
             <h2>How we use AI</h2>
-            <p>Some EPIC World stories are drafted with the help of AI tools from the facts in credited reporting. AI is a drafting aid, not an author: every such story is reviewed by an editor and cannot be published without human approval, and sensitive topics get additional review. AI is never used to create fake images, fake quotes or fake sources.</p>
+            <p>EPIC World uses AI tools to help write. Guides, explainers and blog posts are drafted with AI, then read and approved by a person before they are scheduled or published, and sensitive topics (such as health) get an additional human check. Live desk reports are the exception described above. AI is never used to create fake images, fake quotes or fake sources, and we never present AI output as an eyewitness account.</p>
 
             <h2>Community contributions</h2>
             <p>Posts from readers are clearly labelled &ldquo;Community contributor&rdquo;. Each one is reviewed by an editor before it appears, and we may decline or edit submissions that are inaccurate, plagiarised, promotional, defamatory or otherwise break our <a href="{{ route('terms') }}">terms</a>.</p>

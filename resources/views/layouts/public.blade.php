@@ -135,6 +135,7 @@
                 <a href="{{ route('editorial.policy') }}" class="inline-block py-2 hover:text-accent">Editorial policy</a>
                 <a href="{{ route('write') }}" class="inline-block py-2 hover:text-accent">Write for us</a>
                 <a href="{{ route('terms') }}" class="inline-block py-2 hover:text-accent">Terms</a>
+                <a href="{{ route('disclaimer') }}" class="inline-block py-2 hover:text-accent">Disclaimer</a>
                 <a href="{{ route('privacy') }}" class="inline-block py-2 hover:text-accent">Privacy</a>
                 <a href="{{ route('sitemap') }}" class="inline-block py-2 hover:text-accent">Sitemap</a>
                 @if ($site->needsConsent())

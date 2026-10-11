@@ -66,7 +66,7 @@ class SitemapController extends Controller
      */
     private function writeStaticUrls(): void
     {
-        foreach (['about', 'contact', 'editorial.policy', 'write', 'terms', 'privacy'] as $page) {
+        foreach (['about', 'contact', 'editorial.policy', 'write', 'terms', 'disclaimer', 'privacy'] as $page) {
             $this->writeUrl(route($page));
         }
     }
