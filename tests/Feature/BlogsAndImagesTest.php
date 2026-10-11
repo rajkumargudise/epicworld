@@ -60,7 +60,7 @@ class BlogsAndImagesTest extends TestCase
         Http::fake(['api.openverse.org/*' => Http::response(['results' => [
             ['url' => 'http://insecure.example/a.jpg', 'license' => 'by', 'license_version' => '4.0'],
             ['url' => 'https://img.example/nc.jpg', 'license' => 'by-nc'],
-            ['url' => 'https://img.example/ok.jpg', 'license' => 'by', 'license_version' => '4.0', 'title' => 'Market stall', 'creator' => 'Jo Photo', 'foreign_landing_url' => 'https://flickr.example/p/1'],
+            ['url' => 'https://img.example/ok.jpg', 'license' => 'by', 'license_version' => '4.0', 'title' => 'Mobile payment at a market stall', 'creator' => 'Jo Photo', 'foreign_landing_url' => 'https://flickr.example/p/1'],
         ]])]);
 
         $hit = app(ImageFinder::class)->find('mobile payment!!');
@@ -167,7 +167,7 @@ class BlogsAndImagesTest extends TestCase
 
     public function test_an_editor_can_find_a_free_image_for_an_article(): void
     {
-        Http::fake(['api.openverse.org/*' => Http::response(['results' => [['url' => 'https://img.example/x.jpg', 'license' => 'cc0', 'title' => 'X', 'creator' => 'Y']]])]);
+        Http::fake(['api.openverse.org/*' => Http::response(['results' => [['url' => 'https://img.example/x.jpg', 'license' => 'cc0', 'title' => 'School classroom', 'creator' => 'Y']]])]);
         $article = $this->publishedArticle(['featured_image' => null]);
         $editor = User::factory()->editor()->create();
 

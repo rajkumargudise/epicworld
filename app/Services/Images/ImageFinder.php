@@ -129,13 +129,24 @@ class ImageFinder
                 'mature' => 'false',
                 'aspect_ratio' => 'wide',
                 'size' => 'large',
-                'page_size' => 8,
+                'category' => 'photograph',
+                'page_size' => 20,
             ]);
+
+        $wanted = $this->keywords($query);
 
         foreach ($response->json('results') ?? [] as $image) {
             $url = $image['url'] ?? null;
 
             if (! $url || ! $this->isSafeUrl((string) $url) || ! in_array(strtolower((string) ($image['license'] ?? '')), ['cc0', 'pdm', 'by'], true)) {
+                continue;
+            }
+
+            // Openverse's ranking is loose ("gold coins" can return a painting from a vault), so only
+            // accept a picture whose own title or tags mention what we searched for.
+            $label = mb_strtolower(($image['title'] ?? '').' '.collect($image['tags'] ?? [])->pluck('name')->implode(' '));
+
+            if ($wanted !== [] && ! collect($wanted)->contains(fn (string $word) => str_contains($label, $word))) {
                 continue;
             }
 
@@ -156,6 +167,21 @@ class ImageFinder
         }
 
         return null;
+    }
+
+    /**
+     * The meaningful words of a search phrase.
+     *
+     * @return array<int, string>
+     */
+    private function keywords(string $query): array
+    {
+        $stop = ['the', 'and', 'for', 'with', 'from', 'into', 'over', 'near', 'view', 'photo', 'image', 'close'];
+
+        return array_values(array_filter(
+            explode(' ', mb_strtolower($query)),
+            fn (string $word) => mb_strlen($word) >= 4 && ! in_array($word, $stop, true)
+        ));
     }
 
     private function clean(string $query): string
