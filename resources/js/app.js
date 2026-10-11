@@ -140,6 +140,16 @@ document.addEventListener('click', (e) => {
     if (!button) return;
     const holder = button.closest('[data-embed]');
     if (!holder) return;
+
+    // Only one player at a time: put every other playing tile back to its poster, which
+    // removes its iframe and so stops the video.
+    document.querySelectorAll('[data-embed]').forEach((other) => {
+        if (other !== holder && other.querySelector('iframe') && other._poster !== undefined) {
+            other.innerHTML = other._poster;
+        }
+    });
+
+    holder._poster = holder.innerHTML;
     const frame = document.createElement('iframe');
     frame.src = holder.dataset.embed;
     frame.className = 'absolute inset-0 h-full w-full';
