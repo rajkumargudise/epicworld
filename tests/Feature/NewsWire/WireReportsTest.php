@@ -63,6 +63,17 @@ class WireReportsTest extends TestCase
         $this->assertEqualsWithDelta($at->timestamp, WireItem::firstOrFail()->published_at->timestamp, 5);
     }
 
+    public function test_double_encoded_feed_markup_never_reaches_the_summary(): void
+    {
+        config(['newswire.feeds' => [['scope' => 'news', 'source' => 'ABP Live', 'url' => 'https://feed.test/rss']]]);
+        Http::fake(['feed.test/*' => Http::response('<?xml version="1.0"?><rss version="2.0"><channel><item><title>Protest march planned in the capital</title><link>https://example.test/b</link>'
+            .'<description>&lt;p&gt;New Delhi [India], October 11 (ANI): MPs will stay in the city &amp;amp; march.&lt;/p&gt;</description><pubDate>'.now()->toRssString().'</pubDate></item></channel></rss>')]);
+
+        app(NewsWireFetcher::class)->run();
+
+        $this->assertSame('New Delhi [India], October 11 (ANI): MPs will stay in the city & march.', WireItem::firstOrFail()->summary);
+    }
+
     public function test_the_writer_stores_an_original_report_and_the_page_shows_it_without_sending_readers_away(): void
     {
         Http::fake(['example.test/*' => Http::response('<html><body><article><p>'.str_repeat('Unrelated page text that the writer reads privately. ', 20).'</p></article></body></html>')]);
