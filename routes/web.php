@@ -124,6 +124,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/review', [ReviewQueueController::class, 'index'])->name('review.index');
         Route::post('/review/publish', [ReviewQueueController::class, 'publish'])->name('review.publish');
+        Route::post('/review/queue', [ReviewQueueController::class, 'queue'])->name('review.queue');
         Route::post('/review/{article}/reject', [ReviewQueueController::class, 'reject'])->name('review.reject');
 
         Route::get('/comments', [CommentModerationController::class, 'index'])->name('comments.index');

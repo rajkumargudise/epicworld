@@ -6,6 +6,7 @@ use App\Enums\ArticleStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Services\Editorial\PublicationPolicy;
+use App\Services\Editorial\PublishQueue;
 use App\Services\Editorial\SensitiveContentRouter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -64,6 +65,46 @@ class ReviewQueueController extends Controller
         $article->update(['status' => ArticleStatus::Draft, 'editorial_metadata' => $metadata]);
 
         return back()->with('status', 'Post sent back to the author with your feedback.');
+    }
+
+    /**
+     * Approve the selected articles into the daily publishing queue: they are not published now,
+     * the queue releases one per day at the daily slot (see PublishQueue).
+     */
+    public function queue(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $queued = 0;
+        $skipped = [];
+
+        $articles = Article::query()->whereIn('id', $data['ids'])->where('status', ArticleStatus::Review)->orderBy('id')->get();
+
+        foreach ($articles as $article) {
+            $this->authorize('approve', $article);
+
+            if ($this->policy->approve($article)) {
+                $queued++;
+            } else {
+                $skipped[] = $article->title;
+            }
+        }
+
+        $message = "Added {$queued} ".str('article')->plural($queued).' to the daily queue.';
+
+        if ($queued > 0) {
+            $last = app(PublishQueue::class)->projected()->last();
+            $message .= $last ? ' The last one goes live on '.$last['at']->format('D j M, g:i A').' IST.' : '';
+        }
+
+        if ($skipped !== []) {
+            $message .= ' Skipped (needs sensitive review or failed quality checks): '.implode('; ', array_slice($skipped, 0, 5)).'.';
+        }
+
+        return back()->with($queued > 0 ? 'status' : 'error', $message);
     }
 
     public function publish(Request $request): RedirectResponse

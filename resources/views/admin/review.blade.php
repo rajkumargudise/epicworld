@@ -5,7 +5,7 @@
 @section('content')
     <h1 class="mb-1 text-xl font-semibold">Review queue</h1>
     <p class="mb-6 max-w-2xl text-sm text-slate-500">
-        Drafts written by the AI from collected reporting. Nothing goes live until you publish it. Open an article to read or edit it first;
+        Drafts waiting for your approval. Nothing goes live until you approve it: add it to the daily queue (one post goes live each day at 3:00 PM IST) or publish it right now. Open an article to read or edit it first;
         sensitive topics must be opened and confirmed individually.
     </p>
 
@@ -15,8 +15,10 @@
         <form method="POST" action="{{ route('admin.review.publish') }}">
             @csrf
             <div class="mb-3 flex items-center gap-3">
-                <button type="submit" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
-                        onclick="return confirm('Approve and publish the selected articles?')">Approve &amp; publish selected</button>
+                <button type="submit" formaction="{{ route('admin.review.queue') }}" class="btn-primary rounded-md px-4 py-2 text-sm font-medium text-white"
+                        onclick="return confirm('Approve the selected articles into the daily 3:00 PM queue? One goes live each day.')">Approve &amp; add to daily queue</button>
+                <button type="submit" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:border-slate-400"
+                        onclick="return confirm('Approve and publish the selected articles right now?')">Approve &amp; publish now</button>
                 <label class="flex items-center gap-2 text-sm text-slate-600">
                     <input type="checkbox" onclick="document.querySelectorAll('input[name=&quot;ids[]&quot;]:not(:disabled)').forEach(c => c.checked = this.checked)"> Select all
                 </label>

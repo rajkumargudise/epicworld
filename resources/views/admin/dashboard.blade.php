@@ -47,8 +47,8 @@
         </div>
         <div class="admin-stat">
             <p class="text-xs font-medium uppercase tracking-wider text-muted">Scheduled</p>
-            <p class="mt-2 text-3xl font-bold text-ink">{{ $upcoming->count() }}</p>
-            <p class="mt-1 text-xs text-muted">{{ $upcoming->isNotEmpty() ? 'through '.$upcoming->last()->published_at->timezone('Asia/Kolkata')->format('j M') : 'nothing queued' }}</p>
+            <p class="mt-2 text-3xl font-bold text-ink">{{ $upcoming->count() + $queued->count() }}</p>
+            <p class="mt-1 text-xs text-muted">{{ $queued->isNotEmpty() ? 'queue runs to '.$queued->last()['at']->format('j M') : ($upcoming->isNotEmpty() ? 'through '.$upcoming->last()->published_at->timezone('Asia/Kolkata')->format('j M') : 'nothing queued') }}</p>
         </div>
         <div class="admin-stat">
             <p class="text-xs font-medium uppercase tracking-wider text-muted">Live desk items</p>
@@ -91,21 +91,31 @@
         <section class="lg:col-span-3">
             <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-muted">Publishing schedule</h3>
             <div class="admin-card divide-y divide-line">
-                @forelse ($upcoming as $a)
-                    <a href="{{ route('admin.articles.edit', $a) }}" class="flex items-center gap-4 px-5 py-3.5 transition hover:bg-surface-2">
+                @php
+                    $schedule = $upcoming->map(fn ($a) => ['article' => $a, 'at' => $a->published_at, 'dated' => true])
+                        ->concat($queued->map(fn ($q) => ['article' => $q['article'], 'at' => $q['at'], 'dated' => false]))
+                        ->sortBy(fn ($row) => $row['at']->timestamp)->values();
+                @endphp
+                @foreach ($schedule->take(12) as $row)
+                    @php($at = $row['at']->copy()->timezone('Asia/Kolkata'))
+                    <a href="{{ route('admin.articles.edit', $row['article']) }}" class="flex items-center gap-4 px-5 py-3.5 transition hover:bg-surface-2">
                         <div class="w-14 shrink-0 rounded-lg bg-surface-2 py-1.5 text-center">
-                            <p class="text-[10px] font-semibold uppercase tracking-wider text-muted">{{ $a->published_at->timezone('Asia/Kolkata')->format('M') }}</p>
-                            <p class="text-lg font-bold leading-none text-ink">{{ $a->published_at->timezone('Asia/Kolkata')->format('j') }}</p>
+                            <p class="text-[10px] font-semibold uppercase tracking-wider text-muted">{{ $at->format('M') }}</p>
+                            <p class="text-lg font-bold leading-none text-ink">{{ $at->format('j') }}</p>
                         </div>
                         <div class="min-w-0 flex-1">
-                            <p class="truncate text-sm font-medium text-ink">{{ $a->title }}</p>
-                            <p class="text-xs text-muted">{{ $a->published_at->timezone('Asia/Kolkata')->format('l, g:i A') }} IST</p>
+                            <p class="truncate text-sm font-medium text-ink">{{ $row['article']->title }}</p>
+                            <p class="text-xs text-muted">{{ $at->format('l, g:i A') }} IST</p>
                         </div>
-                        <span class="badge badge-info">Queued</span>
+                        <span class="badge {{ $row['dated'] ? 'badge-info' : 'badge-muted' }}">{{ $row['dated'] ? 'Scheduled' : 'In queue' }}</span>
                     </a>
-                @empty
-                    <p class="px-5 py-8 text-center text-sm text-muted">No posts are scheduled. Approve a draft in the review queue to line one up.</p>
-                @endforelse
+                @endforeach
+                @if ($schedule->count() > 12)
+                    <p class="px-5 py-3 text-center text-xs text-muted">+ {{ $schedule->count() - 12 }} more after these</p>
+                @endif
+                @if ($schedule->isEmpty())
+                    <p class="px-5 py-8 text-center text-sm text-muted">No posts are scheduled. Approve drafts in the review queue to add them to the daily 3:00 PM queue.</p>
+                @endif
             </div>
         </section>
     </div>

@@ -106,7 +106,7 @@ class ArticleController extends Controller
         $this->authorize('approve', $article);
 
         if ($this->publicationPolicy->approve($article)) {
-            return back()->with('status', 'Article approved and scheduled.');
+            return back()->with('status', 'Article approved and added to the daily publishing queue (one post goes live each day at '.\Carbon\Carbon::parse(\App\Services\Editorial\PublishQueue::time())->format('g:i A').' IST). Use Publish to release it now.');
         }
 
         return back()->with('error', $this->explainBlockage($article->refresh(), 'approved'));

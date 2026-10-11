@@ -45,6 +45,9 @@ return [
     | At most this many AI articles are written per day (Admin > Settings
     | can override it), so the review queue stays a manageable size.
     */
+    // Local (IST) time the daily publishing queue releases the next approved article.
+    'publish_time' => env('EDITORIAL_PUBLISH_TIME', '15:00'),
+
     'daily_article_cap' => (int) env('EDITORIAL_DAILY_ARTICLE_CAP', 24),
 
     /*

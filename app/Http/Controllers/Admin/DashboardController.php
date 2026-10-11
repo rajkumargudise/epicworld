@@ -36,11 +36,12 @@ class DashboardController extends Controller
         $lastWire = Cache::get(NewsWireFetcher::LAST_RUN_KEY);
 
         $upcoming = Article::query()->where('status', ArticleStatus::Published)->where('published_at', '>', now())
-            ->orderBy('published_at')->limit(10)->get(['id', 'title', 'slug', 'published_at']);
+            ->orderBy('published_at')->limit(60)->get(['id', 'title', 'slug', 'published_at']);
         $recent = Article::query()->with('category:id,name')->latest('updated_at')->limit(8)->get(['id', 'title', 'slug', 'status', 'category_id', 'published_at', 'updated_at']);
 
         return view('admin.dashboard', [
             'upcoming' => $upcoming,
+            'queued' => app(\App\Services\Editorial\PublishQueue::class)->projected(),
             'recent' => $recent,
             'liveCount' => Article::query()->publiclyVisible()->count(),
             'published7' => Article::query()->publiclyVisible()->where('published_at', '>=', now()->subDays(7))->count(),

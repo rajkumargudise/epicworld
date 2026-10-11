@@ -106,3 +106,12 @@ if (config('newswire.enabled')) {
         ->withoutOverlapping(15)
         ->onFailure(fn () => Log::error('Wire report writing failed.'));
 }
+
+/*
+ * Daily publishing queue: at 15:00 IST the oldest approved article goes live (one per day).
+ */
+Schedule::call(fn () => Artisan::call('articles:publish-queue'))
+    ->name('publish-queue')
+    ->everyFiveMinutes()
+    ->withoutOverlapping(10)
+    ->onFailure(fn () => Log::error('Publishing queue run failed.'));
