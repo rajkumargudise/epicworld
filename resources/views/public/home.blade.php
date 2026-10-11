@@ -126,7 +126,7 @@
             </h2>
             <a href="{{ route('live.scope', 'videos') }}" class="inline-flex min-h-[44px] items-center text-sm font-semibold text-accent hover:underline">All video &rarr;</a>
         </div>
-        @include('partials.live-tv', ['channels' => array_slice(config('newswire.live_channels'), 0, 4)])
+        @include('partials.live-tv', ['channels' => config('newswire.live_channels'), 'limit' => 4])
 
         @if ($videos->isNotEmpty())
             <div class="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">

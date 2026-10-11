@@ -35,11 +35,40 @@
             <img src="{{ $item->image_url }}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" class="mt-8 w-full rounded-3xl border border-line object-cover">
         @endif
 
-        @if ($item->summary)
+        @if ($layout)
+            @include('live._report', ['item' => $item, 'layout' => $layout])
+        @elseif ($item->summary)
             <div class="story-card mt-8 rounded-3xl p-6 sm:p-8">
                 <h2 class="mb-3 text-xs font-bold uppercase tracking-wider text-accent">The brief</h2>
                 <p class="text-lg leading-relaxed text-ink">{{ $item->summary }}</p>
             </div>
+        @endif
+
+        @if (! $layout && $item->kind === 'article' && $generating)
+            <div id="report-wait" data-url="{{ route('wire.report', $item) }}" class="story-card mt-6 flex items-center gap-4 rounded-3xl p-6" role="status">
+                <span class="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-accent border-t-transparent" aria-hidden="true"></span>
+                <div>
+                    <p class="font-semibold text-ink">Writing the full report&hellip;</p>
+                    <p class="text-sm text-muted">This takes under a minute. The page will update by itself.</p>
+                </div>
+            </div>
+            <script>
+                (function () {
+                    var box = document.getElementById('report-wait');
+                    if (!box) return;
+                    var tries = 0;
+                    (function poll() {
+                        fetch(box.dataset.url, { headers: { Accept: 'application/json' } })
+                            .then(function (r) { return r.json(); })
+                            .then(function (d) {
+                                if (d.status === 'ready') { location.reload(); return; }
+                                if (d.status === 'failed' || ++tries > 45) { box.remove(); return; }
+                                setTimeout(poll, 4000);
+                            })
+                            .catch(function () { setTimeout(poll, 6000); });
+                    })();
+                })();
+            </script>
         @endif
 
         @can('access-admin')
@@ -53,6 +82,7 @@
             @endif
         @endcan
 
+        @unless ($layout)
         <div class="story-card mt-6 flex flex-wrap items-center justify-between gap-4 rounded-3xl p-6">
             <div class="min-w-0">
                 <p class="text-xs font-bold uppercase tracking-wider text-muted">Reported by</p>
@@ -63,6 +93,7 @@
                 {{ $item->kind === 'video' ? 'Watch on source' : 'Read full report' }} &#8599;
             </a>
         </div>
+        @endunless
     </article>
 
     @if ($related->isNotEmpty())

@@ -28,6 +28,8 @@ class NewsWireFetcher
 
     public const LOCK_KEY = 'newswire:lock';
 
+    public const VIDEOS_KEY = 'newswire:videos_last';
+
     private const MEDIA_NS = 'http://search.yahoo.com/mrss/';
 
     private const YT_NS = 'http://www.youtube.com/xml/schemas/2015';
@@ -37,13 +39,31 @@ class NewsWireFetcher
      */
     public function run(): array
     {
-        $feeds = array_values(config('newswire.feeds', []));
-        $stats = ['feeds' => count($feeds), 'failed' => 0, 'new_items' => 0, 'pruned' => 0];
+        $all = array_values(config('newswire.feeds', []));
 
-        // YouTube's public channel-feed endpoint is unreliable; with an API
-        // key (Admin > Settings) video feeds use the Data API's uploads
-        // playlist instead, which costs one quota unit per channel.
+        // YouTube retired its public channel RSS feeds. With an API key (Admin > Settings)
+        // video feeds use the Data API's uploads playlist; without one they are read from
+        // the channel's public page (see YoutubeScraper), at most every few minutes.
         $youtubeKey = Setting::read('youtube_api_key') ?: config('newswire.youtube_api_key');
+        $scrapeVideos = blank($youtubeKey);
+        $videosDue = $this->videosDue();
+
+        $feeds = [];
+        $videoFeeds = [];
+
+        foreach ($all as $feed) {
+            if (($feed['kind'] ?? 'article') === 'video' && $scrapeVideos) {
+                if ($videosDue) {
+                    $videoFeeds[] = $feed;
+                }
+
+                continue;
+            }
+
+            $feeds[] = $feed;
+        }
+
+        $stats = ['feeds' => count($feeds) + count($videoFeeds), 'failed' => 0, 'new_items' => 0, 'pruned' => 0];
 
         $requests = [];
         foreach ($feeds as $i => $feed) {
@@ -77,11 +97,85 @@ class NewsWireFetcher
             }
         }
 
+        if ($videoFeeds !== []) {
+            $stats = $this->scrapeVideos($videoFeeds, $stats);
+            Cache::put(self::VIDEOS_KEY, now()->timestamp, now()->addDay());
+        }
+
         $stats['pruned'] = WireItem::query()
             ->where('published_at', '<', now()->subDays((int) config('newswire.retention_days', 5)))
             ->delete();
 
         Cache::put(self::LAST_RUN_KEY, now()->timestamp, now()->addDay());
+
+        return $stats;
+    }
+
+    private function videosDue(): bool
+    {
+        $last = Cache::get(self::VIDEOS_KEY);
+
+        return $last === null || (now()->timestamp - (int) $last) >= (int) config('newswire.videos_every_minutes', 5) * 60 - 20;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $feeds
+     * @param  array{feeds: int, failed: int, new_items: int, pruned: int}  $stats
+     * @return array{feeds: int, failed: int, new_items: int, pruned: int}
+     */
+    private function scrapeVideos(array $feeds, array $stats): array
+    {
+        $scraper = app(YoutubeScraper::class);
+
+        $responses = Http::pool(function (Pool $pool) use ($feeds) {
+            foreach ($feeds as $i => $feed) {
+                if (preg_match('/channel_id=(UC[A-Za-z0-9_-]{22})/', $feed['url'], $m)) {
+                    $pool->as((string) $i)->timeout(20)->withHeaders(YoutubeScraper::headers())
+                        ->get('https://www.youtube.com/channel/'.$m[1].'/videos');
+                }
+            }
+        });
+
+        $candidates = [];
+
+        foreach ($feeds as $i => $feed) {
+            $response = $responses[(string) $i] ?? null;
+
+            if (! $response instanceof Response || ! $response->successful()) {
+                $stats['failed']++;
+
+                continue;
+            }
+
+            foreach ($scraper->videos($response->body(), 10) as $video) {
+                $candidates[$video['id']] = [
+                    'kind' => 'video',
+                    'scope' => $feed['scope'],
+                    'source' => $feed['source'],
+                    'title' => Str::limit($video['title'], 300, '…'),
+                    'summary' => null,
+                    'url' => 'https://www.youtube.com/watch?v='.$video['id'],
+                    'image_url' => null,
+                    'video_id' => $video['id'],
+                    'published_at' => $video['published_at'],
+                ];
+            }
+        }
+
+        // Only look at videos we have not stored yet, and keep only the ones that can be embedded.
+        $known = WireItem::query()->whereIn('video_id', array_keys($candidates))->pluck('video_id')->all();
+        $fresh = array_diff_key($candidates, array_flip($known));
+        $embeddable = $scraper->embeddable(array_keys($fresh));
+
+        foreach ($fresh as $id => $item) {
+            if (($embeddable[$id] ?? true) === false) {
+                continue;
+            }
+
+            $item['url_hash'] = hash('sha256', $item['url']);
+            WireItem::create($item);
+            $stats['new_items']++;
+        }
 
         return $stats;
     }
@@ -148,6 +242,7 @@ class NewsWireFetcher
                 'source' => $feed['source'],
                 'title' => Str::limit($title, 300, '…'),
                 'summary' => $this->summary($rawSummary),
+                'source_text' => $this->sourceText($encoded, $rawSummary),
                 'url' => $url,
                 'image_url' => $this->image($entry, $media, $rawSummary.' '.$encoded),
                 'video_id' => $videoId,
@@ -241,7 +336,16 @@ class NewsWireFetcher
                 $existing->fill(array_filter([
                     'image_url' => $existing->image_url ?: $item['image_url'],
                     'summary' => $existing->summary ?: $item['summary'],
-                ]))->save();
+                    'source_text' => $existing->source_text ?: ($item['source_text'] ?? null),
+                ]));
+
+                // Times were once stored without converting to UTC (feeds in IST ran 5h30m ahead):
+                // the feed's own, correctly parsed time wins whenever it is earlier.
+                if ($existing->published_at && $existing->published_at->gt($item['published_at']->copy()->addMinute())) {
+                    $existing->published_at = $item['published_at'];
+                }
+
+                $existing->save();
 
                 continue;
             }
@@ -316,13 +420,24 @@ class NewsWireFetcher
         $raw = (string) ($entry->pubDate ?? $entry->published ?? $entry->updated ?? $entry->children('http://purl.org/dc/elements/1.1/')->date ?? '');
 
         try {
-            $date = $raw !== '' ? Carbon::parse($raw) : now();
+            $date = $raw !== '' ? Carbon::parse($raw)->utc() : now();
         } catch (Throwable) {
             $date = now();
         }
 
         // A feed claiming a time in the future is clamped to now.
         return $date->isFuture() ? now() : $date;
+    }
+
+    /**
+     * Longer text a feed supplies (content:encoded, or a long description). Kept only as private
+     * reference for the report writer; null when it adds nothing beyond the summary.
+     */
+    private function sourceText(string $encoded, string $description): ?string
+    {
+        $text = $this->text($encoded !== '' ? $encoded : $description);
+
+        return mb_strlen($text) > 600 ? Str::limit($text, 15000, '') : null;
     }
 
     private function summary(string $html): ?string

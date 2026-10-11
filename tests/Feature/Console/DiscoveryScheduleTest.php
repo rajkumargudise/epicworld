@@ -18,7 +18,7 @@ class DiscoveryScheduleTest extends TestCase
         $events = app(Schedule::class)->events();
 
         $discoveryEvents = collect($events)->filter(
-            fn ($event) => str_contains($event->command ?? '', 'stories:discover')
+            fn ($event) => ($event->description ?? '') === 'stories-discover'
         );
 
         $this->assertNotEmpty(
@@ -32,7 +32,7 @@ class DiscoveryScheduleTest extends TestCase
         $events = app(Schedule::class)->events();
 
         $discoveryEvent = collect($events)->first(
-            fn ($event) => str_contains($event->command ?? '', 'stories:discover')
+            fn ($event) => ($event->description ?? '') === 'stories-discover'
         );
 
         $this->assertNotNull($discoveryEvent);
@@ -44,7 +44,7 @@ class DiscoveryScheduleTest extends TestCase
         $events = app(Schedule::class)->events();
 
         $discoveryEvent = collect($events)->first(
-            fn ($event) => str_contains($event->command ?? '', 'stories:discover')
+            fn ($event) => ($event->description ?? '') === 'stories-discover'
         );
 
         $this->assertNotNull($discoveryEvent);

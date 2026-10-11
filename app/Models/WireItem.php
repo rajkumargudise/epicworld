@@ -11,11 +11,21 @@ class WireItem extends Model
     protected $fillable = [
         'kind', 'scope', 'source', 'title', 'summary', 'url', 'url_hash',
         'image_url', 'video_id', 'published_at',
+        'source_text', 'report', 'report_meta', 'report_status', 'report_attempts', 'report_error', 'report_generated_at',
     ];
 
     protected function casts(): array
     {
-        return ['published_at' => 'datetime'];
+        return [
+            'published_at' => 'datetime',
+            'report_meta' => 'array',
+            'report_generated_at' => 'datetime',
+        ];
+    }
+
+    public function hasReport(): bool
+    {
+        return $this->report_status === 'ready' && filled($this->report);
     }
 
     public function scopeNewest(Builder $query): Builder

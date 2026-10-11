@@ -75,6 +75,7 @@ Route::post('/article/{publicArticle:slug}/comments', [CommentController::class,
 Route::get('/live', [LiveNewsController::class, 'index'])->name('live');
 Route::get('/live/{scope}', [LiveNewsController::class, 'index'])->whereIn('scope', ['world', 'news', 'local', 'videos'])->name('live.scope');
 Route::get('/live/{scope}/feed', [LiveNewsController::class, 'feed'])->whereIn('scope', ['world', 'news', 'local'])->name('live.feed');
+Route::get('/wire/{item}/report', [LiveNewsController::class, 'report'])->whereNumber('item')->name('wire.report');
 Route::get('/wire/{item}/{slug?}', [LiveNewsController::class, 'show'])->whereNumber('item')->name('wire.show');
 Route::get('/latest', [LatestController::class, 'index'])->name('latest');
 Route::get('/search', [SearchController::class, 'index'])->name('search');

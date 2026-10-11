@@ -83,6 +83,32 @@ class HotStories
     }
 
     /**
+     * Other outlets' items about the same development as $item (newest first).
+     *
+     * @return Collection<int, WireItem>
+     */
+    public function related(WireItem $item, int $hours = 36, float $similarity = 0.35, int $max = 5): Collection
+    {
+        $mine = $this->tokens($item->title);
+
+        if (count($mine) < 3) {
+            return new Collection;
+        }
+
+        return WireItem::articles()
+            ->whereKeyNot($item->id)
+            ->where('source', '!=', $item->source)
+            ->where('published_at', '>=', $item->published_at->copy()->subHours($hours))
+            ->newest()
+            ->limit(400)
+            ->get()
+            ->filter(fn (WireItem $other) => $this->jaccard($mine, $this->tokens($other->title)) >= $similarity)
+            ->unique('source')
+            ->take($max)
+            ->values();
+    }
+
+    /**
      * @return array<int, string>
      */
     private function tokens(string $title): array

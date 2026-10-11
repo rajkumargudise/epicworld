@@ -2,11 +2,20 @@
 
 namespace App\Http\Controllers\Public;
 
+use App\Console\Commands\WriteWireReports;
 use App\Http\Controllers\Controller;
 use App\Models\WireItem;
+use App\Services\Ai\AiProviderManager;
+use App\Services\Ai\Exceptions\AiProviderUnavailableException;
+use App\Services\Content\StoryRenderer;
 use App\Services\NewsWire\NewsWireFetcher;
+use App\Services\NewsWire\WireReportWriter;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 /**
@@ -84,8 +93,10 @@ class LiveNewsController extends Controller
             ->header('X-Robots-Tag', 'noindex');
     }
 
-    public function show(WireItem $item, ?string $slug = null): View
+    public function show(Request $request, WireItem $item, ?string $slug = null): View
     {
+        $generating = $item->kind === 'article' && ! $item->hasReport() && $this->startReport($request, $item);
+
         $related = WireItem::query()
             ->where('id', '!=', $item->id)
             ->where('kind', $item->kind)
@@ -96,11 +107,81 @@ class LiveNewsController extends Controller
 
         return view('live.show', [
             'item' => $item,
+            'layout' => $item->hasReport()
+                ? app(StoryRenderer::class)->render((string) $item->report, $item->report_meta['key_points'] ?? null)
+                : null,
+            'generating' => $generating || $this->isWriting($item),
             'related' => $related,
             // Short wire briefs are credited summaries, not original
             // articles - keep them out of search indexes.
             ...$this->seo($item->title, (string) ($item->summary ?? $item->title), $item->path(), false),
         ]);
+    }
+
+    /**
+     * Lets the page poll for its report while it is being written.
+     */
+    public function report(WireItem $item): JsonResponse
+    {
+        $status = $item->hasReport() ? 'ready' : ($item->report_status === 'failed' ? 'failed' : ($this->isWriting($item) ? 'pending' : 'none'));
+
+        return response()->json(['status' => $status])->header('Cache-Control', 'no-store');
+    }
+
+    private function isWriting(WireItem $item): bool
+    {
+        return $item->report_status === 'pending' && $item->updated_at?->gt(now()->subMinutes(6));
+    }
+
+    /**
+     * A reader opened a headline that has no report yet: write it now, after the response is
+     * sent, so the page can show "being written" and swap in the report when it is ready.
+     * Skipped for crawlers (the scheduled writer covers them), when the AI provider is cooling
+     * down or unconfigured, and once the daily cap is reached.
+     */
+    private function startReport(Request $request, WireItem $item): bool
+    {
+        $agent = (string) $request->userAgent();
+
+        if ($agent === '' || preg_match('/bot|crawl|spider|slurp|facebookexternalhit|preview|monitor|curl|wget|python|http-client|headless/i', $agent)) {
+            return false;
+        }
+
+        $writer = app(WireReportWriter::class);
+
+        if (! $writer->eligible($item) || Cache::has(WriteWireReports::COOLDOWN_KEY) || WriteWireReports::capReached() || ! app(AiProviderManager::class)->isReady()) {
+            return false;
+        }
+
+        // Exactly one request wins the right to write (a stale "pending" can be reclaimed).
+        $claimed = WireItem::query()->whereKey($item->id)
+            ->where(fn ($q) => $q->whereNull('report_status')->orWhere(fn ($q) => $q->where('report_status', 'pending')->where('updated_at', '<', now()->subMinutes(6))))
+            ->update(['report_status' => 'pending', 'updated_at' => now()]);
+
+        if ($claimed === 0) {
+            return false;
+        }
+
+        $id = $item->id;
+
+        dispatch(function () use ($id, $writer) {
+            $fresh = WireItem::query()->find($id);
+
+            if (! $fresh) {
+                return;
+            }
+
+            try {
+                $writer->write($fresh);
+            } catch (AiProviderUnavailableException) {
+                Cache::put(WriteWireReports::COOLDOWN_KEY, true, now()->addMinutes(5));
+            } catch (\Throwable $e) {
+                Log::warning('On-demand wire report failed: '.$e->getMessage());
+                $fresh->forceFill(['report_status' => null, 'report_error' => Str::limit($e->getMessage(), 240, '')])->save();
+            }
+        })->afterResponse();
+
+        return true;
     }
 
     private function refreshIfStale(): void

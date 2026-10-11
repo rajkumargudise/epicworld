@@ -33,7 +33,7 @@
             <h2 class="mb-5 flex items-center gap-3 text-2xl font-extrabold tracking-tight">
                 <span class="h-6 w-1.5 rounded-full bg-red-500"></span> Live TV
             </h2>
-            @include('partials.live-tv', ['channels' => $mode === 'hub' ? array_slice($channels, 0, 8) : $channels])
+            @include('partials.live-tv', ['channels' => $channels, 'limit' => $mode === 'hub' ? 12 : null])
         </section>
     @endif
 

@@ -19,7 +19,7 @@ class EditorialScheduleTest extends TestCase
         $events = app(Schedule::class)->events();
 
         $editorialEvents = collect($events)->filter(
-            fn ($event) => str_contains($event->command ?? '', 'editorial:process')
+            fn ($event) => ($event->description ?? '') === 'editorial-process'
         );
 
         $this->assertNotEmpty(
@@ -33,7 +33,7 @@ class EditorialScheduleTest extends TestCase
         $events = app(Schedule::class)->events();
 
         $editorialEvent = collect($events)->first(
-            fn ($event) => str_contains($event->command ?? '', 'editorial:process')
+            fn ($event) => ($event->description ?? '') === 'editorial-process'
         );
 
         $this->assertNotNull($editorialEvent);
@@ -45,7 +45,7 @@ class EditorialScheduleTest extends TestCase
         $events = app(Schedule::class)->events();
 
         $editorialEvent = collect($events)->first(
-            fn ($event) => str_contains($event->command ?? '', 'editorial:process')
+            fn ($event) => ($event->description ?? '') === 'editorial-process'
         );
 
         $this->assertNotNull($editorialEvent);
@@ -53,17 +53,19 @@ class EditorialScheduleTest extends TestCase
         $this->assertSame("*/{$frequency} * * * *", $editorialEvent->expression);
     }
 
-    public function test_the_scheduled_entry_passes_the_configured_batch_limit(): void
+    public function test_every_scheduled_task_runs_in_process_because_the_host_blocks_proc_open(): void
     {
         $events = app(Schedule::class)->events();
 
-        $editorialEvent = collect($events)->first(
-            fn ($event) => str_contains($event->command ?? '', 'editorial:process')
-        );
+        $this->assertNotEmpty($events);
 
-        $this->assertNotNull($editorialEvent);
-        $limit = (int) config('editorial.schedule.batch_limit', 5);
-        $this->assertStringContainsString("--limit={$limit}", $editorialEvent->command);
+        foreach ($events as $event) {
+            $this->assertInstanceOf(
+                \Illuminate\Console\Scheduling\CallbackEvent::class,
+                $event,
+                'Schedule::command() spawns a child process via proc_open, which Hostinger disables - use Schedule::call(Artisan::call(...)).'
+            );
+        }
     }
 
     public function test_editorial_process_command_is_registered(): void

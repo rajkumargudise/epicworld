@@ -92,11 +92,12 @@ class NewsWireTest extends TestCase
 
     public function test_youtube_feed_entries_become_playable_videos(): void
     {
-        $this->useFeeds([['scope' => 'world', 'source' => 'DW News', 'kind' => 'video', 'url' => 'https://www.youtube.com/feeds/videos.xml?channel_id=UC1']]);
-        Http::fake(['www.youtube.com/*' => Http::response('<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom" xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/">'
-            .'<entry><yt:videoId>abcDEF12345</yt:videoId><title>Video report</title><link rel="alternate" href="https://www.youtube.com/watch?v=abcDEF12345"/>'
-            .'<published>'.now()->subHour()->toIso8601String().'</published><media:group><media:description>Desc here</media:description></media:group></entry>'
-            .'<entry><yt:videoId>bad id!</yt:videoId><title>Broken</title><link rel="alternate" href="https://www.youtube.com/watch?v=x"/></entry></feed>')]);
+        $this->useFeeds([['scope' => 'world', 'source' => 'DW News', 'kind' => 'video', 'url' => 'https://www.youtube.com/feeds/videos.xml?channel_id=UCknLrEdhRCp1aegoMqRaCZg']]);
+        $renderer = fn (string $id, string $title, string $age) => '"videoRenderer":{"videoId":"'.$id.'","thumbnail":{"thumbnails":[]},"title":{"runs":[{"text":"'.$title.'"}]},"publishedTimeText":{"simpleText":"'.$age.'"}}';
+        Http::fake([
+            'www.youtube.com/channel/*' => Http::response('var ytInitialData = {'.$renderer('abcDEF12345', 'Video report', '1 hour ago').','.$renderer('blockedVid1', 'No embedding', '2 hours ago').'};'),
+            'www.youtube.com/oembed*' => fn ($request) => str_contains($request->url(), 'blockedVid1') ? Http::response('', 401) : Http::response(['title' => 'ok']),
+        ]);
 
         app(NewsWireFetcher::class)->run();
 

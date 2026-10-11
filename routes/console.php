@@ -1,7 +1,5 @@
 <?php
 
-use App\Console\Commands\DiscoverStories;
-use App\Console\Commands\ProcessEditorialJobs;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -10,6 +8,14 @@ use Illuminate\Support\Facades\Schedule;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+/*
+ * HOSTING NOTE - every task below is a Schedule::call() closure that runs the artisan
+ * command in-process via Artisan::call(). Schedule::command() would spawn a child
+ * process (proc_open), which Hostinger disables, so every scheduled command silently
+ * failed there ("The Process class relies on proc_open...") and the wire only
+ * refreshed when a visitor happened to trigger it.
+ */
 
 /*
  * Scheduled discovery: invokes the existing stories:discover command
@@ -34,7 +40,8 @@ if (config('discovery.schedule.enabled')) {
     $frequencyMinutes = max(1, min(59, (int) config('discovery.schedule.frequency_minutes', 15)));
     $lockMinutes = max(1, intdiv((int) config('discovery.schedule.lock_seconds', 1800), 60));
 
-    Schedule::command(DiscoverStories::class)
+    Schedule::call(fn () => Artisan::call('stories:discover'))
+        ->name('stories-discover')
         ->cron("*/{$frequencyMinutes} * * * *")
         ->withoutOverlapping($lockMinutes)
         ->onFailure(fn () => Log::error('Scheduled discovery run reported failure.'));
@@ -48,7 +55,8 @@ if (config('discovery.schedule.enabled')) {
 if (config('newswire.enabled')) {
     $wireMinutes = max(1, min(59, (int) config('newswire.fetch_every_minutes', 1)));
 
-    Schedule::command(\App\Console\Commands\FetchNewsWire::class)
+    Schedule::call(fn () => Artisan::call('news:fetch'))
+        ->name('news-fetch')
         ->cron($wireMinutes === 1 ? '* * * * *' : "*/{$wireMinutes} * * * *")
         ->withoutOverlapping(10)
         ->onFailure(fn () => Log::error('Scheduled newswire fetch reported failure.'));
@@ -73,8 +81,28 @@ if (config('editorial.schedule.enabled')) {
     $lockMinutes = max(1, intdiv((int) config('editorial.schedule.lock_seconds', 1800), 60));
     $batchLimit = max(1, (int) config('editorial.schedule.batch_limit', 5));
 
-    Schedule::command(ProcessEditorialJobs::class, ['--limit' => $batchLimit])
+    Schedule::call(fn () => Artisan::call('editorial:process', ['--limit' => $batchLimit]))
+        ->name('editorial-process')
         ->cron("*/{$frequencyMinutes} * * * *")
         ->withoutOverlapping($lockMinutes)
         ->onFailure(fn () => Log::error('Scheduled editorial processing run reported failure.'));
+}
+
+/*
+ * Live TV: works out which news channels are streaming (and embeddable) right now,
+ * so the site never shows a player that would say "something went wrong".
+ */
+if (config('newswire.enabled')) {
+    Schedule::call(fn () => app(\App\Services\NewsWire\LiveChannelResolver::class)->refresh())
+        ->name('live-channels')
+        ->everyFiveMinutes()
+        ->withoutOverlapping(10)
+        ->onFailure(fn () => Log::error('Live channel refresh failed.'));
+
+    // Writes the full in-site report for the most important fresh headlines.
+    Schedule::call(fn () => Artisan::call('wire:write-reports', ['--limit' => (int) config('newswire.reports.per_run', 2)]))
+        ->name('wire-write-reports')
+        ->everyMinute()
+        ->withoutOverlapping(15)
+        ->onFailure(fn () => Log::error('Wire report writing failed.'));
 }
