@@ -36,8 +36,8 @@ return [
     // Full in-site reports for live-desk headlines (written by the AI provider, in EpicWorld's
     // own words - see App\Services\NewsWire\WireReportWriter).
     'reports' => [
-        'per_run' => (int) env('NEWSWIRE_REPORTS_PER_RUN', 2),
-        'daily_cap' => (int) env('NEWSWIRE_REPORTS_DAILY_CAP', 300),
+        'per_run' => (int) env('NEWSWIRE_REPORTS_PER_RUN', 1),
+        'daily_cap' => (int) env('NEWSWIRE_REPORTS_DAILY_CAP', 200),
         'max_age_hours' => 48,
         'min_words' => 200,
         // Fraction of 8-word runs that may match the source verbatim before a draft is rejected.

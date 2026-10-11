@@ -82,7 +82,9 @@ class GeminiProvider implements AiProvider
 
             $fallback = $this->config['fallback_model'] ?? null;
 
-            if ($response->serverError() && filled($fallback) && $fallback !== $model) {
+            // Each Gemini model has its own quota, so an exhausted daily quota (HTTP 429) on the main
+            // model can still be served by the lighter one.
+            if (($response->serverError() || $response->status() === 429) && filled($fallback) && $fallback !== $model) {
                 $model = $fallback;
                 $response = $call($model);
             }
