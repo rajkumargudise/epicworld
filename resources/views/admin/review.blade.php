@@ -9,6 +9,13 @@
         sensitive topics must be opened and confirmed individually.
     </p>
 
+    <div class="mb-5 flex flex-wrap gap-2 text-sm">
+        @foreach (['all' => 'All', 'guides' => 'Guides & blogs', 'news' => 'News stories'] as $key => $label)
+            <a href="{{ route('admin.review.index', $key === 'all' ? [] : ['type' => $key]) }}"
+               class="rounded-full border px-4 py-1.5 font-medium {{ $type === $key ? 'border-indigo-300 bg-indigo-100 text-indigo-800' : 'border-slate-200 text-slate-600 hover:border-slate-400' }}">{{ $label }} <span class="opacity-70">{{ $counts[$key] }}</span></a>
+        @endforeach
+    </div>
+
     @if ($articles->isEmpty())
         <p class="rounded-lg border border-slate-200 bg-white p-6 text-slate-500">Nothing is waiting for review.</p>
     @else

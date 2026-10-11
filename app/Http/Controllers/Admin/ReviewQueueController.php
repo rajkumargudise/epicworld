@@ -29,21 +29,35 @@ class ReviewQueueController extends Controller
         private readonly SensitiveContentRouter $sensitivity,
     ) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $this->authorize('viewAny', Article::class);
+
+        // Guides/blogs (written on request) and news stories (drafted automatically from reporting) are
+        // reviewed differently, so they can be listed separately.
+        $type = in_array($request->query('type'), ['guides', 'news'], true) ? $request->query('type') : 'all';
+
+        $base = fn () => Article::query()->where('status', ArticleStatus::Review);
+        $counts = [
+            'all' => $base()->count(),
+            'guides' => $base()->where('editorial_metadata->source', 'ai_blog')->count(),
+        ];
+        $counts['news'] = $counts['all'] - $counts['guides'];
 
         $articles = Article::query()
             ->with(['category', 'story.sources', 'author'])
             ->where('status', ArticleStatus::Review)
-            ->orderByDesc('updated_at')
-            ->paginate(25);
+            ->when($type === 'guides', fn ($q) => $q->where('editorial_metadata->source', 'ai_blog'))
+            ->when($type === 'news', fn ($q) => $q->where(fn ($q) => $q->whereNull('editorial_metadata->source')->orWhere('editorial_metadata->source', '!=', 'ai_blog')))
+            ->orderBy($type === 'guides' ? 'id' : 'updated_at', $type === 'guides' ? 'asc' : 'desc')
+            ->paginate(40)
+            ->withQueryString();
 
         $articles->getCollection()->each(function (Article $article) {
             $article->setAttribute('needs_sensitive_review', $this->sensitivity->requiresReview($article));
         });
 
-        return view('admin.review', ['articles' => $articles]);
+        return view('admin.review', ['articles' => $articles, 'type' => $type, 'counts' => $counts]);
     }
 
     /**
